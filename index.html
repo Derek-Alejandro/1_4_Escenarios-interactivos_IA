@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Three.js - Octree Collisions</title>
+
+    <!-- CSS -->
+    <link
+        rel="stylesheet"
+        href="./assets/css/styles.css"
+    >
+
+</head>
+
+<body>
+
+    <div id="info">
+
+        Octree Three.js Demo - Colisiones con escenario 3D
+
+        <br>
+
+        MOUSE para mirar y lanzar esferas
+
+        <br>
+
+        WASD para moverse y SPACE para saltar
+
+    </div>
+
+
+    <!-- Contenedor del escenario -->
+    <div id="container"></div>
+
+
+    <!-- THREE.JS + ADDONS -->
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"
+        }
+    }
+    </script>
+
+
+    <!-- JavaScript principal -->
+    <script
+        type="module"
+        src="./assets/js/main.js">
+    </script>
+
+</body>
+
+</html>
