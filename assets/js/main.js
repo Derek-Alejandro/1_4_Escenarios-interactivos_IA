@@ -4,17 +4,12 @@
 
 import * as THREE from 'three';
 
-import { GLTFLoader }
-    from 'three/addons/loaders/GLTFLoader.js';
+import {
+    GLTFLoader
+} from 'three/addons/loaders/GLTFLoader.js';
 
-import { Octree }
-    from 'three/addons/math/Octree.js';
-
-import { Capsule }
-    from 'three/addons/math/Capsule.js';
-
-import RAPIER
-    from 'https://cdn.skypack.dev/@dimforge/rapier3d-compat';
+import RAPIER from
+    'https://cdn.skypack.dev/@dimforge/rapier3d-compat';
 
 
 
@@ -123,10 +118,6 @@ renderer.shadowMap.type =
     THREE.PCFSoftShadowMap;
 
 
-/*
-    Mejor representación de colores.
-*/
-
 renderer.outputColorSpace =
     THREE.SRGBColorSpace;
 
@@ -149,11 +140,6 @@ container.appendChild(
    ILUMINACIÓN
 ========================================================= */
 
-
-/*
-    Luz ambiental tipo cielo.
-*/
-
 const hemisphereLight =
     new THREE.HemisphereLight(
 
@@ -171,11 +157,6 @@ scene.add(
 );
 
 
-
-/*
-    Luz principal.
-*/
-
 const sun =
     new THREE.DirectionalLight(
 
@@ -189,9 +170,7 @@ const sun =
 sun.position.set(
 
     -5,
-
     18,
-
     6
 
 );
@@ -201,14 +180,9 @@ sun.castShadow =
     true;
 
 
-/*
-    Calidad de sombras.
-*/
-
 sun.shadow.mapSize.set(
 
     2048,
-
     2048
 
 );
@@ -219,23 +193,23 @@ sun.shadow.camera.near =
 
 
 sun.shadow.camera.far =
-    80;
+    100;
 
 
 sun.shadow.camera.left =
-    -25;
+    -35;
 
 
 sun.shadow.camera.right =
-    25;
+    35;
 
 
 sun.shadow.camera.top =
-    25;
+    35;
 
 
 sun.shadow.camera.bottom =
-    -25;
+    -35;
 
 
 sun.shadow.bias =
@@ -258,70 +232,7 @@ const clock =
 
 
 /* =========================================================
-   OCTREE DEL ESCENARIO
-========================================================= */
-
-const worldOctree =
-    new Octree();
-
-
-
-/* =========================================================
-   JUGADOR
-========================================================= */
-
-const playerCollider =
-    new Capsule(
-
-        new THREE.Vector3(
-
-            0,
-
-            0.35,
-
-            0
-
-        ),
-
-        new THREE.Vector3(
-
-            0,
-
-            1,
-
-            0
-
-        ),
-
-        0.35
-
-    );
-
-
-const playerVelocity =
-    new THREE.Vector3();
-
-
-const playerDirection =
-    new THREE.Vector3();
-
-
-let playerOnFloor =
-    false;
-
-
-
-/* =========================================================
-   TECLADO
-========================================================= */
-
-const keyStates =
-    {};
-
-
-
-/* =========================================================
-   CONFIGURACIÓN DE FÍSICA RAPIER
+   MUNDO FÍSICO RAPIER
 ========================================================= */
 
 const gravity = {
@@ -341,54 +252,597 @@ const physicsWorld =
     );
 
 
-
-/* =========================================================
-   OBJETOS FÍSICOS
-========================================================= */
-
-const physicalObjects =
-    [];
-
-
-const lasers =
-    [];
+physicsWorld.integrationParameters.maxCcdSubsteps =
+    4;
 
 
 
 /* =========================================================
-   PISO FÍSICO PARA RAPIER
+   JUGADOR
 ========================================================= */
 
 /*
-    Este piso evita que las cajas dinámicas
-    atraviesen el suelo.
+    Medidas aproximadas equivalentes
+    a la cápsula que utilizábamos antes.
 */
 
-const groundDesc =
-    RAPIER.ColliderDesc
-        .cuboid(
-            30,
-            0.1,
-            30
-        )
-        .setTranslation(
-            0,
-            -0.1,
-            0
-        )
-        .setFriction(
-            0.8
-        );
+const PLAYER_RADIUS =
+    0.35;
 
 
-physicsWorld.createCollider(
-    groundDesc
-);
+const PLAYER_HALF_HEIGHT =
+    0.325;
+
+
+/*
+    Centro del jugador.
+*/
+
+const PLAYER_START = {
+
+    x: 0,
+
+    y: 0.675,
+
+    z: 0
+
+};
+
+
+/*
+    Cámara situada aproximadamente
+    a la altura de los ojos.
+*/
+
+const PLAYER_EYE_OFFSET =
+    0.325;
 
 
 
 /* =========================================================
-   CREAR CAJA DINÁMICA
+   CUERPO CINEMÁTICO DEL JUGADOR
+========================================================= */
+
+const playerBodyDesc =
+
+    RAPIER.RigidBodyDesc
+        .kinematicPositionBased()
+
+        .setTranslation(
+
+            PLAYER_START.x,
+
+            PLAYER_START.y,
+
+            PLAYER_START.z
+
+        );
+
+
+const playerBody =
+
+    physicsWorld
+        .createRigidBody(
+            playerBodyDesc
+        );
+
+
+
+/* =========================================================
+   COLLIDER DEL JUGADOR
+========================================================= */
+
+const playerColliderDesc =
+
+    RAPIER.ColliderDesc
+        .capsule(
+
+            PLAYER_HALF_HEIGHT,
+
+            PLAYER_RADIUS
+
+        )
+
+        .setFriction(
+            0
+        );
+
+
+const playerCollider =
+
+    physicsWorld
+        .createCollider(
+
+            playerColliderDesc,
+
+            playerBody
+
+        );
+
+
+
+/* =========================================================
+   CHARACTER CONTROLLER
+========================================================= */
+
+/*
+    El pequeño offset evita que la cápsula
+    quede pegada exactamente a las superficies.
+*/
+
+const characterController =
+
+    physicsWorld
+        .createCharacterController(
+            0.025
+        );
+
+
+/*
+    IMPORTANTE:
+
+    false significa que NO intentará subir
+    automáticamente encima de los cubos dinámicos.
+
+    Por lo tanto, al caminar contra un cubo,
+    chocaremos contra él.
+*/
+
+characterController.enableAutostep(
+
+    0.25,
+
+    0.15,
+
+    false
+
+);
+
+
+/*
+    Mantiene al jugador pegado al suelo
+    al caminar por pequeñas pendientes.
+*/
+
+characterController.enableSnapToGround(
+    0.2
+);
+
+
+/*
+    Pendiente máxima.
+*/
+
+characterController.setMaxSlopeClimbAngle(
+
+    45 *
+    Math.PI /
+    180
+
+);
+
+
+/*
+    Permitir que el jugador empuje
+    objetos dinámicos.
+
+    El jugador no los atraviesa.
+*/
+
+characterController
+    .setApplyImpulsesToDynamicBodies(
+        true
+    );
+
+
+characterController
+    .setCharacterMass(
+        55
+    );
+
+
+
+/* =========================================================
+   VELOCIDAD DEL JUGADOR
+========================================================= */
+
+const playerVelocity =
+    new THREE.Vector3();
+
+
+const playerDirection =
+    new THREE.Vector3();
+
+
+let playerOnFloor =
+    false;
+
+
+
+/* =========================================================
+   TECLADO
+========================================================= */
+
+const keyStates = {};
+
+
+
+/* =========================================================
+   OBJETOS
+========================================================= */
+
+const physicalObjects = [];
+
+const lasers = [];
+
+const scenarioMeshes = [];
+
+const spawnPositions = [];
+
+
+let scenarioBounds =
+    null;
+
+
+let scenarioReady =
+    false;
+
+
+
+/* =========================================================
+   CONFIGURACIÓN DE CUBOS
+========================================================= */
+
+/*
+    Cubos completamente aleatorios
+    repartidos por el escenario.
+*/
+
+const RANDOM_BOX_COUNT =
+    12;
+
+
+/*
+    Número de pirámides.
+*/
+
+const PYRAMID_COUNT =
+    2;
+
+
+/*
+    Cada pirámide tendrá:
+
+    nivel 1 = 4 cubos
+    nivel 2 = 3 cubos
+    nivel 3 = 2 cubos
+    nivel 4 = 1 cubo
+
+    Total: 10 cubos.
+*/
+
+const PYRAMID_BASE =
+    4;
+
+
+const SPAWN_MARGIN =
+    2;
+
+
+const PLAYER_SAFE_DISTANCE =
+    4;
+
+
+const MAX_SPAWN_ATTEMPTS =
+    200;
+
+
+
+/* =========================================================
+   RAYCASTER PARA DETECTAR SUELO
+========================================================= */
+
+const groundRaycaster =
+    new THREE.Raycaster();
+
+
+const downDirection =
+    new THREE.Vector3(
+        0,
+        -1,
+        0
+    );
+
+
+const rayOrigin =
+    new THREE.Vector3();
+
+
+const worldNormal =
+    new THREE.Vector3();
+
+
+const normalMatrix =
+    new THREE.Matrix3();
+
+
+
+/* =========================================================
+   FÍSICA DEL ESCENARIO
+========================================================= */
+
+function createStaticColliderFromMesh(
+    mesh
+) {
+
+    const geometry =
+        mesh.geometry;
+
+
+    if (
+
+        !geometry ||
+
+        !geometry.attributes.position
+
+    ) {
+
+        return;
+
+    }
+
+
+    const position =
+        geometry.attributes.position;
+
+
+    const vertexCount =
+        position.count;
+
+
+    const vertices =
+
+        new Float32Array(
+
+            vertexCount *
+            3
+
+        );
+
+
+    const vertex =
+        new THREE.Vector3();
+
+
+
+    /* =====================================================
+       VÉRTICES
+    ===================================================== */
+
+    for (
+
+        let i = 0;
+
+        i < vertexCount;
+
+        i++
+
+    ) {
+
+        vertex
+            .fromBufferAttribute(
+
+                position,
+
+                i
+
+            )
+
+            .applyMatrix4(
+
+                mesh.matrixWorld
+
+            );
+
+
+        vertices[
+            i * 3
+        ] =
+            vertex.x;
+
+
+        vertices[
+            i * 3 + 1
+        ] =
+            vertex.y;
+
+
+        vertices[
+            i * 3 + 2
+        ] =
+            vertex.z;
+
+    }
+
+
+
+    /* =====================================================
+       ÍNDICES
+    ===================================================== */
+
+    let indices;
+
+
+    if (
+        geometry.index
+    ) {
+
+        const original =
+            geometry.index.array;
+
+
+        indices =
+            new Uint32Array(
+                original.length
+            );
+
+
+        for (
+
+            let i = 0;
+
+            i < original.length;
+
+            i++
+
+        ) {
+
+            indices[i] =
+                original[i];
+
+        }
+
+    } else {
+
+        const validCount =
+
+            Math.floor(
+
+                vertexCount /
+                3
+
+            )
+
+            * 3;
+
+
+        indices =
+            new Uint32Array(
+                validCount
+            );
+
+
+        for (
+
+            let i = 0;
+
+            i < validCount;
+
+            i++
+
+        ) {
+
+            indices[i] =
+                i;
+
+        }
+
+    }
+
+
+
+    if (
+        indices.length < 3
+    ) {
+
+        return;
+
+    }
+
+
+
+    /* =====================================================
+       TRIMESH RAPIER
+    ===================================================== */
+
+    const colliderDesc =
+
+        RAPIER.ColliderDesc
+            .trimesh(
+
+                vertices,
+
+                indices
+
+            )
+
+            .setFriction(
+                0.9
+            )
+
+            .setRestitution(
+                0.02
+            );
+
+
+    physicsWorld
+        .createCollider(
+            colliderDesc
+        );
+
+}
+
+
+
+/* =========================================================
+   CREAR FÍSICA DEL ESCENARIO COMPLETO
+========================================================= */
+
+function createScenarioPhysics(
+    model
+) {
+
+    model.updateMatrixWorld(
+        true
+    );
+
+
+    let total =
+        0;
+
+
+    model.traverse(
+
+        (child) => {
+
+            if (
+                !child.isMesh
+            ) {
+
+                return;
+
+            }
+
+
+            scenarioMeshes.push(
+                child
+            );
+
+
+            createStaticColliderFromMesh(
+                child
+            );
+
+
+            total++;
+
+        }
+
+    );
+
+
+    console.log(
+
+        `Meshes físicas del escenario: ${total}`
+
+    );
+
+}
+
+
+
+/* =========================================================
+   CREAR CUBO FÍSICO
 ========================================================= */
 
 function createDynamicBox(
@@ -401,15 +855,18 @@ function createDynamicBox(
     sy,
     sz,
 
-    mass = 4
+    mass = 4,
+
+    color = 0x94a3b8
 
 ) {
 
-    /* -------------------------
-       MESH THREE.JS
-    ------------------------- */
+    /* =====================================================
+       THREE.JS
+    ===================================================== */
 
     const geometry =
+
         new THREE.BoxGeometry(
 
             sx,
@@ -420,21 +877,22 @@ function createDynamicBox(
 
 
     const material =
+
         new THREE.MeshStandardMaterial({
 
-            color:
-                0x94a3b8,
+            color,
 
             roughness:
-                0.65,
+                0.72,
 
             metalness:
-                0.08
+                0.05
 
         });
 
 
     const mesh =
+
         new THREE.Mesh(
 
             geometry,
@@ -467,23 +925,43 @@ function createDynamicBox(
 
 
 
-    /* -------------------------
-       RIGID BODY RAPIER
-    ------------------------- */
+    /* =====================================================
+       CUERPO FÍSICO
+    ===================================================== */
 
     const bodyDesc =
+
         RAPIER.RigidBodyDesc
             .dynamic()
+
             .setTranslation(
 
                 x,
                 y,
                 z
 
+            )
+
+            /*
+                Evita atravesar superficies
+                a altas velocidades.
+            */
+
+            .setCcdEnabled(
+                true
+            )
+
+            .setLinearDamping(
+                0.08
+            )
+
+            .setAngularDamping(
+                0.15
             );
 
 
     const body =
+
         physicsWorld
             .createRigidBody(
                 bodyDesc
@@ -491,9 +969,9 @@ function createDynamicBox(
 
 
 
-    /* -------------------------
+    /* =====================================================
        COLLIDER
-    ------------------------- */
+    ===================================================== */
 
     const volume =
 
@@ -509,11 +987,13 @@ function createDynamicBox(
 
 
     const density =
+
         mass /
         volume;
 
 
     const colliderDesc =
+
         RAPIER.ColliderDesc
             .cuboid(
 
@@ -524,36 +1004,313 @@ function createDynamicBox(
                 sz / 2
 
             )
+
             .setDensity(
                 density
             )
+
             .setFriction(
-                0.7
+                0.9
             )
+
             .setRestitution(
-                0.12
+                0.03
             );
 
 
-    physicsWorld.createCollider(
+    const collider =
 
-        colliderDesc,
+        physicsWorld
+            .createCollider(
 
-        body
+                colliderDesc,
 
-    );
+                body
+
+            );
 
 
 
-    /* -------------------------
-       GUARDAR REFERENCIA
-    ------------------------- */
+    /* =====================================================
+       GUARDAR REFERENCIAS
+    ===================================================== */
 
     physicalObjects.push({
 
         mesh,
 
-        body
+        body,
+
+        collider,
+
+        size: {
+
+            x: sx,
+
+            y: sy,
+
+            z: sz
+
+        }
+
+    });
+
+
+    return {
+
+        mesh,
+
+        body,
+
+        collider
+
+    };
+
+}
+
+
+
+/* =========================================================
+   ENCONTRAR EL SUELO
+========================================================= */
+
+function findGroundPosition(
+    x,
+    z
+) {
+
+    if (
+
+        !scenarioBounds ||
+
+        scenarioMeshes.length === 0
+
+    ) {
+
+        return null;
+
+    }
+
+
+
+    rayOrigin.set(
+
+        x,
+
+        scenarioBounds.max.y +
+        10,
+
+        z
+
+    );
+
+
+    groundRaycaster.set(
+
+        rayOrigin,
+
+        downDirection
+
+    );
+
+
+    groundRaycaster.far =
+
+        (
+            scenarioBounds.max.y -
+            scenarioBounds.min.y
+        )
+
+        + 30;
+
+
+
+    const intersections =
+
+        groundRaycaster
+            .intersectObjects(
+
+                scenarioMeshes,
+
+                false
+
+            );
+
+
+
+    for (
+        const hit
+        of intersections
+    ) {
+
+        if (
+            !hit.face
+        ) {
+
+            continue;
+
+        }
+
+
+
+        normalMatrix
+            .getNormalMatrix(
+
+                hit.object.matrixWorld
+
+            );
+
+
+        worldNormal
+            .copy(
+                hit.face.normal
+            )
+
+            .applyMatrix3(
+                normalMatrix
+            )
+
+            .normalize();
+
+
+
+        /*
+            Solo superficies suficientemente
+            horizontales.
+        */
+
+        if (
+            worldNormal.y >= 0.88
+        ) {
+
+            return {
+
+                point:
+                    hit.point.clone(),
+
+                normal:
+                    worldNormal.clone()
+
+            };
+
+        }
+
+    }
+
+
+    return null;
+
+}
+
+
+
+/* =========================================================
+   COMPROBAR POSICIÓN LIBRE
+========================================================= */
+
+function isSpawnPositionFree(
+
+    x,
+    z,
+    radius
+
+) {
+
+    /*
+        Evitar aparecer encima
+        del jugador.
+    */
+
+    const distancePlayer =
+
+        Math.hypot(
+
+            x -
+            PLAYER_START.x,
+
+            z -
+            PLAYER_START.z
+
+        );
+
+
+    if (
+        distancePlayer <
+        PLAYER_SAFE_DISTANCE
+    ) {
+
+        return false;
+
+    }
+
+
+
+    /*
+        Evitar generar estructuras
+        unas encima de otras.
+    */
+
+    for (
+        const position
+        of spawnPositions
+    ) {
+
+        const distance =
+
+            Math.hypot(
+
+                x -
+                position.x,
+
+                z -
+                position.z
+
+            );
+
+
+        if (
+
+            distance <
+
+            radius +
+            position.radius
+
+        ) {
+
+            return false;
+
+        }
+
+    }
+
+
+    return true;
+
+}
+
+
+
+/* =========================================================
+   REGISTRAR ESPACIO OCUPADO
+========================================================= */
+
+function registerSpawn(
+
+    x,
+
+    z,
+
+    radius
+
+) {
+
+    spawnPositions.push({
+
+        x,
+
+        z,
+
+        radius
 
     });
 
@@ -562,47 +1319,790 @@ function createDynamicBox(
 
 
 /* =========================================================
-   TORRE DE OBJETOS
+   BUSCAR ZONA PLANA
 ========================================================= */
 
-for (
+function findFlatArea(
 
-    let level = 0;
+    x,
 
-    level < 3;
+    z,
 
-    level++
+    radius
 
 ) {
+
+    const samples = [
+
+        [0, 0],
+
+        [radius, 0],
+
+        [-radius, 0],
+
+        [0, radius],
+
+        [0, -radius],
+
+        [radius, radius],
+
+        [-radius, radius],
+
+        [radius, -radius],
+
+        [-radius, -radius]
+
+    ];
+
+
+    const heights = [];
+
+
+    for (
+        const [dx, dz]
+        of samples
+    ) {
+
+        const ground =
+
+            findGroundPosition(
+
+                x + dx,
+
+                z + dz
+
+            );
+
+
+        if (
+            !ground
+        ) {
+
+            return null;
+
+        }
+
+
+        heights.push(
+            ground.point.y
+        );
+
+    }
+
+
+
+    const minHeight =
+        Math.min(
+            ...heights
+        );
+
+
+    const maxHeight =
+        Math.max(
+            ...heights
+        );
+
+
+    /*
+        No generar una pirámide
+        sobre una zona inclinada.
+    */
+
+    if (
+
+        maxHeight -
+        minHeight >
+
+        0.18
+
+    ) {
+
+        return null;
+
+    }
+
+
+    return {
+
+        y:
+            heights[0]
+
+    };
+
+}
+
+
+
+/* =========================================================
+   COLOR ALEATORIO DE LOS CUBOS
+========================================================= */
+
+function randomBoxColor() {
+
+    const colors = [
+
+        0x94a3b8,
+
+        0x64748b,
+
+        0xcbd5e1,
+
+        0x78909c,
+
+        0x9ca3af,
+
+        0x7dd3fc
+
+    ];
+
+
+    return colors[
+
+        Math.floor(
+
+            Math.random() *
+            colors.length
+
+        )
+
+    ];
+
+}
+
+
+
+/* =========================================================
+   GENERAR CUBOS ALEATORIOS DE DIFERENTES TAMAÑOS
+========================================================= */
+
+function generateRandomBoxes() {
+
+    const minX =
+
+        scenarioBounds.min.x +
+        SPAWN_MARGIN;
+
+
+    const maxX =
+
+        scenarioBounds.max.x -
+        SPAWN_MARGIN;
+
+
+    const minZ =
+
+        scenarioBounds.min.z +
+        SPAWN_MARGIN;
+
+
+    const maxZ =
+
+        scenarioBounds.max.z -
+        SPAWN_MARGIN;
+
+
+
+    let created =
+        0;
+
+
 
     for (
 
         let i = 0;
 
-        i < 3 - level;
+        i < RANDOM_BOX_COUNT;
 
         i++
 
     ) {
 
-        createDynamicBox(
+        /*
+            TAMAÑOS ALEATORIOS.
 
-            -2 +
-            i * 1.15 +
-            level * 0.55,
+            Ahora podemos encontrar cubos
+            pequeños, medianos y grandes.
+        */
 
-            0.5 +
-            level,
+        const sx =
 
-            -5,
+            THREE.MathUtils.randFloat(
 
-            1,
-            1,
-            1,
+                0.55,
 
-            4
+                1.6
+
+            );
+
+
+        const sy =
+
+            THREE.MathUtils.randFloat(
+
+                0.55,
+
+                1.8
+
+            );
+
+
+        const sz =
+
+            THREE.MathUtils.randFloat(
+
+                0.55,
+
+                1.6
+
+            );
+
+
+        const radius =
+
+            Math.max(
+                sx,
+                sz
+            )
+
+            * 0.75;
+
+
+
+        for (
+
+            let attempt = 0;
+
+            attempt < MAX_SPAWN_ATTEMPTS;
+
+            attempt++
+
+        ) {
+
+            const x =
+
+                THREE.MathUtils.randFloat(
+
+                    minX,
+
+                    maxX
+
+                );
+
+
+            const z =
+
+                THREE.MathUtils.randFloat(
+
+                    minZ,
+
+                    maxZ
+
+                );
+
+
+
+            if (
+
+                !isSpawnPositionFree(
+
+                    x,
+
+                    z,
+
+                    radius
+
+                )
+
+            ) {
+
+                continue;
+
+            }
+
+
+
+            const ground =
+
+                findGroundPosition(
+
+                    x,
+
+                    z
+
+                );
+
+
+            if (
+                !ground
+            ) {
+
+                continue;
+
+            }
+
+
+
+            const y =
+
+                ground.point.y +
+
+                sy / 2 +
+
+                0.03;
+
+
+
+            createDynamicBox(
+
+                x,
+
+                y,
+
+                z,
+
+                sx,
+
+                sy,
+
+                sz,
+
+                THREE.MathUtils.randFloat(
+                    3,
+                    10
+                ),
+
+                randomBoxColor()
+
+            );
+
+
+
+            registerSpawn(
+
+                x,
+
+                z,
+
+                radius
+
+            );
+
+
+            created++;
+
+
+            break;
+
+        }
+
+    }
+
+
+
+    console.log(
+
+        `Cubos aleatorios creados: ${created}`
+
+    );
+
+}
+
+
+
+/* =========================================================
+   BUSCAR UBICACIÓN PARA UNA PIRÁMIDE
+========================================================= */
+
+function findPyramidSpawn(
+
+    baseCount,
+
+    cubeSize
+
+) {
+
+    const footprint =
+
+        baseCount *
+        cubeSize;
+
+
+    const radius =
+
+        footprint *
+        0.65;
+
+
+
+    const minX =
+
+        scenarioBounds.min.x +
+
+        radius +
+
+        SPAWN_MARGIN;
+
+
+    const maxX =
+
+        scenarioBounds.max.x -
+
+        radius -
+
+        SPAWN_MARGIN;
+
+
+    const minZ =
+
+        scenarioBounds.min.z +
+
+        radius +
+
+        SPAWN_MARGIN;
+
+
+    const maxZ =
+
+        scenarioBounds.max.z -
+
+        radius -
+
+        SPAWN_MARGIN;
+
+
+
+    if (
+
+        minX >= maxX ||
+
+        minZ >= maxZ
+
+    ) {
+
+        return null;
+
+    }
+
+
+
+    for (
+
+        let attempt = 0;
+
+        attempt <
+        MAX_SPAWN_ATTEMPTS;
+
+        attempt++
+
+    ) {
+
+        const x =
+
+            THREE.MathUtils.randFloat(
+
+                minX,
+
+                maxX
+
+            );
+
+
+        const z =
+
+            THREE.MathUtils.randFloat(
+
+                minZ,
+
+                maxZ
+
+            );
+
+
+
+        if (
+
+            !isSpawnPositionFree(
+
+                x,
+
+                z,
+
+                radius
+
+            )
+
+        ) {
+
+            continue;
+
+        }
+
+
+
+        const flatArea =
+
+            findFlatArea(
+
+                x,
+
+                z,
+
+                radius * 0.75
+
+            );
+
+
+        if (
+            !flatArea
+        ) {
+
+            continue;
+
+        }
+
+
+
+        registerSpawn(
+
+            x,
+
+            z,
+
+            radius +
+            1
 
         );
+
+
+        return {
+
+            x,
+
+            y:
+                flatArea.y,
+
+            z
+
+        };
+
+    }
+
+
+    return null;
+
+}
+
+
+
+/* =========================================================
+   CREAR PIRÁMIDE DERRIBABLE
+========================================================= */
+
+function createPyramid(
+
+    centerX,
+
+    groundY,
+
+    centerZ,
+
+    cubeSize,
+
+    levels
+
+) {
+
+    /*
+        Dejamos una separación muy pequeña.
+
+        Esto evita que los colliders nazcan
+        exactamente superpuestos.
+    */
+
+    const horizontalSpacing =
+
+        cubeSize *
+        1.03;
+
+
+    const verticalSpacing =
+
+        cubeSize *
+        1.015;
+
+
+
+    /*
+        La pirámide puede mirar hacia
+        una dirección distinta en cada partida.
+    */
+
+    const yaw =
+
+        THREE.MathUtils.randFloat(
+
+            0,
+
+            Math.PI *
+            2
+
+        );
+
+
+    const cos =
+
+        Math.cos(
+            yaw
+        );
+
+
+    const sin =
+
+        Math.sin(
+            yaw
+        );
+
+
+
+    /*
+        Ejemplo con 4 niveles:
+
+        [] [] [] []
+          [] [] []
+            [] []
+              []
+    */
+
+    for (
+
+        let level = 0;
+
+        level < levels;
+
+        level++
+
+    ) {
+
+        const boxesOnLevel =
+
+            levels -
+            level;
+
+
+        const levelWidth =
+
+            (
+                boxesOnLevel -
+                1
+            )
+
+            *
+            horizontalSpacing;
+
+
+
+        for (
+
+            let i = 0;
+
+            i < boxesOnLevel;
+
+            i++
+
+        ) {
+
+            /*
+                Posición horizontal local.
+            */
+
+            const localX =
+
+                -levelWidth /
+                2
+
+                +
+
+                i *
+                horizontalSpacing;
+
+
+
+            /*
+                Giramos toda la pirámide
+                alrededor del eje Y.
+            */
+
+            const rotatedX =
+
+                localX *
+                cos;
+
+
+            const rotatedZ =
+
+                localX *
+                sin;
+
+
+
+            const x =
+
+                centerX +
+                rotatedX;
+
+
+            const z =
+
+                centerZ +
+                rotatedZ;
+
+
+            const y =
+
+                groundY +
+
+                cubeSize /
+                2
+
+                +
+
+                level *
+                verticalSpacing;
+
+
+
+            /*
+                Los bloques de las pirámides
+                tienen masas moderadas.
+
+                Son estables al comenzar,
+                pero un disparo puede derribarlos.
+            */
+
+            createDynamicBox(
+
+                x,
+
+                y,
+
+                z,
+
+                cubeSize,
+
+                cubeSize,
+
+                cubeSize,
+
+                THREE.MathUtils.randFloat(
+                    3.5,
+                    5
+                ),
+
+                randomBoxColor()
+
+            );
+
+        }
 
     }
 
@@ -610,51 +2110,107 @@ for (
 
 
 
-/*
-    Objetos adicionales.
-*/
+/* =========================================================
+   GENERAR PIRÁMIDES
+========================================================= */
 
-createDynamicBox(
+function generatePyramids() {
 
-    3,
-
-    0.75,
-
-    -5,
-
-    1.2,
-
-    1.5,
-
-    1.2,
-
-    8
-
-);
+    let created =
+        0;
 
 
-createDynamicBox(
 
-    4.4,
+    for (
 
-    0.4,
+        let i = 0;
 
-    -5,
+        i < PYRAMID_COUNT;
 
-    0.8,
+        i++
 
-    0.8,
+    ) {
 
-    0.8,
+        /*
+            Cada pirámide puede tener
+            cubos de un tamaño distinto.
 
-    2
+            Una podría tener cubos de 0.75
+            y otra de 1.05, por ejemplo.
+        */
 
-);
+        const cubeSize =
+
+            THREE.MathUtils.randFloat(
+
+                0.75,
+
+                1.05
+
+            );
+
+
+        const location =
+
+            findPyramidSpawn(
+
+                PYRAMID_BASE,
+
+                cubeSize
+
+            );
+
+
+        if (
+            !location
+        ) {
+
+            console.warn(
+
+                `No se encontró espacio para la pirámide ${i + 1}.`
+
+            );
+
+
+            continue;
+
+        }
+
+
+
+        createPyramid(
+
+            location.x,
+
+            location.y,
+
+            location.z,
+
+            cubeSize,
+
+            PYRAMID_BASE
+
+        );
+
+
+        created++;
+
+    }
+
+
+
+    console.log(
+
+        `Pirámides creadas: ${created}`
+
+    );
+
+}
 
 
 
 /* =========================================================
-   CARGAR ESCENARIO GLB
+   CARGAR ESCENARIO
 ========================================================= */
 
 const loader =
@@ -666,9 +2222,9 @@ loader.load(
     './assets/models/collision-world.glb',
 
 
-    /* ========================
+    /* =====================================================
        MODELO CARGADO
-    ======================== */
+    ===================================================== */
 
     (gltf) => {
 
@@ -676,44 +2232,50 @@ loader.load(
             gltf.scene;
 
 
+
+        /* =================================================
+           CONFIGURAR MODELO
+        ================================================= */
+
         model.traverse(
 
             (child) => {
 
                 if (
-                    child.isMesh
+                    !child.isMesh
                 ) {
 
-                    child.castShadow =
-                        true;
+                    return;
+
+                }
 
 
-                    child.receiveShadow =
-                        true;
+                child.castShadow =
+                    true;
 
 
-                    /*
-                        Mejorar las texturas.
-                    */
+                child.receiveShadow =
+                    true;
 
-                    if (
-                        child.material?.map
-                    ) {
 
-                        child.material
-                            .map
-                            .anisotropy =
-                            Math.min(
 
-                                8,
+                if (
+                    child.material?.map
+                ) {
 
-                                renderer
-                                    .capabilities
-                                    .getMaxAnisotropy()
+                    child.material
+                        .map
+                        .anisotropy =
 
-                            );
+                        Math.min(
 
-                    }
+                            8,
+
+                            renderer
+                                .capabilities
+                                .getMaxAnisotropy()
+
+                        );
 
                 }
 
@@ -722,39 +2284,91 @@ loader.load(
         );
 
 
+
         scene.add(
             model
         );
 
 
+        model.updateMatrixWorld(
+            true
+        );
+
+
+
+        /* =================================================
+           LÍMITES
+        ================================================= */
+
+        scenarioBounds =
+
+            new THREE.Box3()
+                .setFromObject(
+                    model
+                );
+
+
+
+        /* =================================================
+           FÍSICA DEL MAPA
+        ================================================= */
+
+        createScenarioPhysics(
+            model
+        );
+
+
+
+        /* =================================================
+           PRIMERO PIRÁMIDES
+        ================================================= */
+
+        generatePyramids();
+
+
+
+        /* =================================================
+           DESPUÉS CUBOS ALEATORIOS
+        ================================================= */
+
+        generateRandomBoxes();
+
+
+
+        /* =================================================
+           ACTIVAR ESCENARIO
+        ================================================= */
+
+        scenarioReady =
+            true;
+
+
         /*
-            Crear la estructura de colisiones
-            del escenario para el jugador.
+            Sincronizamos inicialmente
+            la posición de la cámara.
         */
 
-        worldOctree
-            .fromGraphNode(
-                model
-            );
+        updateCameraFromPlayer();
 
 
         console.log(
 
-            'Escenario collision-world.glb cargado correctamente.'
+            'Escenario preparado correctamente.'
 
         );
 
     },
 
 
-    /* ========================
+    /* =====================================================
        PROGRESO
-    ======================== */
+    ===================================================== */
 
     (xhr) => {
 
         if (
-            xhr.total > 0
+            xhr.total >
+            0
         ) {
 
             const progress =
@@ -764,7 +2378,8 @@ loader.load(
                     xhr.total
                 )
 
-                * 100;
+                *
+                100;
 
 
             console.log(
@@ -778,9 +2393,9 @@ loader.load(
     },
 
 
-    /* ========================
+    /* =====================================================
        ERROR
-    ======================== */
+    ===================================================== */
 
     (error) => {
 
@@ -813,8 +2428,18 @@ function getForwardVector() {
         0;
 
 
-    return playerDirection
-        .normalize();
+    if (
+        playerDirection.lengthSq() >
+        0
+    ) {
+
+        playerDirection
+            .normalize();
+
+    }
+
+
+    return playerDirection;
 
 }
 
@@ -835,8 +2460,15 @@ function getSideVector() {
         0;
 
 
-    playerDirection
-        .normalize();
+    if (
+        playerDirection.lengthSq() >
+        0
+    ) {
+
+        playerDirection
+            .normalize();
+
+    }
 
 
     playerDirection
@@ -852,22 +2484,14 @@ function getSideVector() {
 
 
 /* =========================================================
-   CONTROLES
+   CONTROLES DEL JUGADOR
 ========================================================= */
 
 function controls(
-
     deltaTime
-
 ) {
 
-    /*
-        En el suelo nos movemos más rápido.
-
-        En el aire existe menor control.
-    */
-
-    const speed =
+    const acceleration =
 
         playerOnFloor
 
@@ -877,9 +2501,9 @@ function controls(
 
 
 
-    /* -------------------------
+    /* =====================================================
        W
-    ------------------------- */
+    ===================================================== */
 
     if (
         keyStates.KeyW
@@ -888,10 +2512,9 @@ function controls(
         playerVelocity.add(
 
             getForwardVector()
-
                 .multiplyScalar(
 
-                    speed *
+                    acceleration *
                     deltaTime
 
                 )
@@ -902,9 +2525,9 @@ function controls(
 
 
 
-    /* -------------------------
+    /* =====================================================
        S
-    ------------------------- */
+    ===================================================== */
 
     if (
         keyStates.KeyS
@@ -913,10 +2536,9 @@ function controls(
         playerVelocity.add(
 
             getForwardVector()
-
                 .multiplyScalar(
 
-                    -speed *
+                    -acceleration *
                     deltaTime
 
                 )
@@ -927,9 +2549,9 @@ function controls(
 
 
 
-    /* -------------------------
+    /* =====================================================
        A
-    ------------------------- */
+    ===================================================== */
 
     if (
         keyStates.KeyA
@@ -938,10 +2560,9 @@ function controls(
         playerVelocity.add(
 
             getSideVector()
-
                 .multiplyScalar(
 
-                    -speed *
+                    -acceleration *
                     deltaTime
 
                 )
@@ -952,9 +2573,9 @@ function controls(
 
 
 
-    /* -------------------------
+    /* =====================================================
        D
-    ------------------------- */
+    ===================================================== */
 
     if (
         keyStates.KeyD
@@ -963,10 +2584,9 @@ function controls(
         playerVelocity.add(
 
             getSideVector()
-
                 .multiplyScalar(
 
-                    speed *
+                    acceleration *
                     deltaTime
 
                 )
@@ -977,9 +2597,9 @@ function controls(
 
 
 
-    /* -------------------------
+    /* =====================================================
        SALTO
-    ------------------------- */
+    ===================================================== */
 
     if (
 
@@ -992,84 +2612,9 @@ function controls(
         playerVelocity.y =
             7;
 
-    }
-
-}
-
-
-
-/* =========================================================
-   COLISIONES DEL JUGADOR
-========================================================= */
-
-function playerCollisions() {
-
-    const result =
-
-        worldOctree
-            .capsuleIntersect(
-
-                playerCollider
-
-            );
-
-
-    playerOnFloor =
-        false;
-
-
-    if (
-        result
-    ) {
 
         playerOnFloor =
-
-            result.normal.y >
-            0;
-
-
-        /*
-            Si la colisión no es contra el suelo,
-            eliminamos la velocidad dirigida
-            contra la pared.
-        */
-
-        if (
-            !playerOnFloor
-        ) {
-
-            playerVelocity
-                .addScaledVector(
-
-                    result.normal,
-
-                    -result.normal.dot(
-
-                        playerVelocity
-
-                    )
-
-                );
-
-        }
-
-
-        /*
-            Sacamos al jugador fuera de
-            la geometría contra la que chocó.
-        */
-
-        playerCollider
-            .translate(
-
-                result.normal
-                    .multiplyScalar(
-
-                        result.depth
-
-                    )
-
-            );
+            false;
 
     }
 
@@ -1078,245 +2623,218 @@ function playerCollisions() {
 
 
 /* =========================================================
-   EMPUJAR OBJETOS AL CAMINAR
-========================================================= */
-
-function pushNearbyObjects() {
-
-    const moving =
-        new THREE.Vector3(
-
-            playerVelocity.x,
-
-            0,
-
-            playerVelocity.z
-
-        );
-
-
-    /*
-        Si prácticamente no nos movemos,
-        no aplicamos fuerza.
-    */
-
-    if (
-        moving.lengthSq() <
-        0.04
-    ) {
-
-        return;
-
-    }
-
-
-
-    for (
-        const item
-        of physicalObjects
-    ) {
-
-        const position =
-            item.body
-                .translation();
-
-
-        const dx =
-
-            position.x -
-            camera.position.x;
-
-
-        const dz =
-
-            position.z -
-            camera.position.z;
-
-
-        const distance =
-
-            Math.hypot(
-
-                dx,
-
-                dz
-
-            );
-
-
-        /*
-            Si estamos cerca,
-            empujamos la caja.
-        */
-
-        if (
-            distance <
-            1.15
-        ) {
-
-            const force =
-
-                0.7 /
-
-                Math.max(
-
-                    distance,
-
-                    0.25
-
-                );
-
-
-            item.body
-                .applyImpulse(
-
-                    {
-
-                        x:
-                            dx *
-                            force,
-
-                        y:
-                            0.05,
-
-                        z:
-                            dz *
-                            force
-
-                    },
-
-                    true
-
-                );
-
-        }
-
-    }
-
-}
-
-
-
-/* =========================================================
-   ACTUALIZAR JUGADOR
+   MOVIMIENTO FÍSICO DEL JUGADOR
 ========================================================= */
 
 function updatePlayer(
-
     deltaTime
-
 ) {
 
-    let damping =
+    /* =====================================================
+       FRICCIÓN HORIZONTAL
+    ===================================================== */
+
+    const horizontalDamping =
 
         Math.exp(
 
             -4 *
             deltaTime
 
-        )
-
-        - 1;
+        );
 
 
+    playerVelocity.x *=
+        horizontalDamping;
 
-    /* -------------------------
+
+    playerVelocity.z *=
+        horizontalDamping;
+
+
+
+    /* =====================================================
        GRAVEDAD
-    ------------------------- */
+    ===================================================== */
 
     if (
-        !playerOnFloor
+        playerOnFloor
     ) {
+
+        /*
+            Pequeña fuerza hacia abajo para
+            mantener contacto con el piso.
+        */
+
+        if (
+            playerVelocity.y <
+            0
+        ) {
+
+            playerVelocity.y =
+                -0.5;
+
+        }
+
+    } else {
 
         playerVelocity.y -=
 
             25 *
             deltaTime;
 
+    }
 
-        /*
-            Menor fricción en el aire.
-        */
 
-        damping *=
-            0.1;
+
+    /* =====================================================
+       MOVIMIENTO DESEADO
+    ===================================================== */
+
+    const desiredMovement = {
+
+        x:
+            playerVelocity.x *
+            deltaTime,
+
+        y:
+            playerVelocity.y *
+            deltaTime,
+
+        z:
+            playerVelocity.z *
+            deltaTime
+
+    };
+
+
+
+    /*
+        Rapier calcula cuánto podemos
+        movernos realmente sin atravesar:
+
+        - paredes
+        - pisos
+        - cubos
+        - pirámides
+        - otros colliders
+    */
+
+    characterController
+        .computeColliderMovement(
+
+            playerCollider,
+
+            desiredMovement
+
+        );
+
+
+
+    const movement =
+
+        characterController
+            .computedMovement();
+
+
+
+    /*
+        Saber si el jugador está
+        tocando suelo.
+    */
+
+    playerOnFloor =
+
+        characterController
+            .computedGrounded();
+
+
+
+    /*
+        Si caíamos pero el movimiento vertical
+        fue detenido por el suelo, eliminamos
+        velocidad descendente.
+    */
+
+    if (
+
+        playerOnFloor &&
+
+        playerVelocity.y <
+        0
+
+    ) {
+
+        playerVelocity.y =
+            0;
 
     }
 
 
 
-    /* -------------------------
-       FRICCIÓN
-    ------------------------- */
+    const current =
 
-    playerVelocity
-        .addScaledVector(
-
-            playerVelocity,
-
-            damping
-
-        );
+        playerBody
+            .translation();
 
 
 
-    /* -------------------------
-       MOVIMIENTO
-    ------------------------- */
+    /*
+        Posición física corregida.
+    */
 
-    const movement =
+    playerBody
+        .setNextKinematicTranslation({
 
-        playerVelocity
-            .clone()
-            .multiplyScalar(
+            x:
+                current.x +
+                movement.x,
 
-                deltaTime
+            y:
+                current.y +
+                movement.y,
 
-            );
+            z:
+                current.z +
+                movement.z
 
+        });
 
-    playerCollider
-        .translate(
-            movement
-        );
-
-
-
-    /* -------------------------
-       COLISIONES
-    ------------------------- */
-
-    playerCollisions();
+}
 
 
 
-    /* -------------------------
-       CÁMARA
-    ------------------------- */
+/* =========================================================
+   POSICIÓN DE CÁMARA SEGÚN JUGADOR
+========================================================= */
 
-    camera.position
-        .copy(
+function updateCameraFromPlayer() {
 
-            playerCollider.end
+    const position =
 
-        );
-
-
-
-    /* -------------------------
-       EMPUJAR OBJETOS
-    ------------------------- */
-
-    pushNearbyObjects();
+        playerBody
+            .translation();
 
 
+    camera.position.set(
 
-    /* -------------------------
-       REAPARECER SI CAEMOS
-    ------------------------- */
+        position.x,
+
+        position.y +
+        PLAYER_EYE_OFFSET,
+
+        position.z
+
+    );
+
+
+
+    /* =====================================================
+       SI CAEMOS FUERA DEL MAPA
+    ===================================================== */
 
     if (
-        camera.position.y <
+        position.y <
         -20
     ) {
 
@@ -1334,44 +2852,56 @@ function updatePlayer(
 
 function resetPlayer() {
 
-    playerCollider.start.set(
+    playerBody
+        .setTranslation(
 
-        0,
+            {
 
-        0.35,
+                x:
+                    PLAYER_START.x,
 
-        0
+                y:
+                    PLAYER_START.y,
 
-    );
+                z:
+                    PLAYER_START.z
+
+            },
+
+            true
+
+        );
 
 
-    playerCollider.end.set(
+    playerBody
+        .setNextKinematicTranslation({
 
-        0,
+            x:
+                PLAYER_START.x,
 
-        1,
+            y:
+                PLAYER_START.y,
 
-        0
+            z:
+                PLAYER_START.z
 
-    );
+        });
 
 
     playerVelocity.set(
 
         0,
-
         0,
-
         0
 
     );
 
 
-    camera.position.copy(
+    playerOnFloor =
+        false;
 
-        playerCollider.end
 
-    );
+    updateCameraFromPlayer();
 
 }
 
@@ -1382,11 +2912,6 @@ function resetPlayer() {
 ========================================================= */
 
 function shootLaser() {
-
-    /*
-        Solo podemos disparar mientras
-        Pointer Lock está activo.
-    */
 
     if (
 
@@ -1406,9 +2931,7 @@ function shootLaser() {
 
 
     camera.getWorldDirection(
-
         direction
-
     );
 
 
@@ -1416,11 +2939,8 @@ function shootLaser() {
 
 
 
-    /* -------------------------
-       GEOMETRÍA
-    ------------------------- */
-
     const geometry =
+
         new THREE.CylinderGeometry(
 
             0.035,
@@ -1434,13 +2954,6 @@ function shootLaser() {
         );
 
 
-    /*
-        CylinderGeometry se crea vertical.
-
-        Lo giramos para que apunte
-        hacia adelante.
-    */
-
     geometry.rotateX(
 
         Math.PI /
@@ -1450,11 +2963,8 @@ function shootLaser() {
 
 
 
-    /* -------------------------
-       MATERIAL
-    ------------------------- */
-
     const material =
+
         new THREE.MeshStandardMaterial({
 
             color:
@@ -1473,11 +2983,8 @@ function shootLaser() {
 
 
 
-    /* -------------------------
-       MESH
-    ------------------------- */
-
     const mesh =
+
         new THREE.Mesh(
 
             geometry,
@@ -1491,6 +2998,7 @@ function shootLaser() {
         .copy(
             camera.position
         )
+
         .addScaledVector(
 
             direction,
@@ -1500,23 +3008,13 @@ function shootLaser() {
         );
 
 
-
-    /*
-        Hacer que el láser apunte en la
-        misma dirección que la cámara.
-    */
-
     mesh.quaternion
         .setFromUnitVectors(
 
             new THREE.Vector3(
-
                 0,
-
                 0,
-
                 1
-
             ),
 
             direction
@@ -1529,11 +3027,6 @@ function shootLaser() {
     );
 
 
-
-    /* -------------------------
-       GUARDAR LÁSER
-    ------------------------- */
-
     lasers.push({
 
         mesh,
@@ -1541,10 +3034,10 @@ function shootLaser() {
         direction,
 
         speed:
-            32,
+            35,
 
         life:
-            1.7
+            1.8
 
     });
 
@@ -1553,16 +3046,15 @@ function shootLaser() {
 
 
 /* =========================================================
-   EFECTO DE IMPACTO
+   EFECTO DEL IMPACTO
 ========================================================= */
 
 function createImpact(
-
     position
-
 ) {
 
     const flash =
+
         new THREE.PointLight(
 
             0x67e8f9,
@@ -1587,11 +3079,6 @@ function createImpact(
     );
 
 
-    /*
-        Desaparece rápidamente
-        para simular un destello.
-    */
-
     setTimeout(
 
         () => {
@@ -1611,19 +3098,51 @@ function createImpact(
 
 
 /* =========================================================
+   ELIMINAR LÁSER
+========================================================= */
+
+function removeLaser(
+    index
+) {
+
+    const laser =
+        lasers[index];
+
+
+    scene.remove(
+        laser.mesh
+    );
+
+
+    laser.mesh
+        .geometry
+        .dispose();
+
+
+    laser.mesh
+        .material
+        .dispose();
+
+
+    lasers.splice(
+
+        index,
+
+        1
+
+    );
+
+}
+
+
+
+/* =========================================================
    ACTUALIZAR LÁSERES
 ========================================================= */
 
 function updateLasers(
-
     deltaTime
-
 ) {
-
-    /*
-        Objetos contra los que puede
-        impactar el láser.
-    */
 
     const meshes =
 
@@ -1659,11 +3178,8 @@ function updateLasers(
 
 
 
-        /* -------------------------
-           RAYCASTER
-        ------------------------- */
-
         const ray =
+
             new THREE.Raycaster(
 
                 laser.mesh.position,
@@ -1673,7 +3189,7 @@ function updateLasers(
                 0,
 
                 distance +
-                0.5
+                0.6
 
             );
 
@@ -1689,10 +3205,6 @@ function updateLasers(
             )[0];
 
 
-
-        /* -------------------------
-           IMPACTO
-        ------------------------- */
 
         if (
             hit
@@ -1711,9 +3223,42 @@ function updateLasers(
                     );
 
 
+
             if (
                 item
             ) {
+
+                /*
+                    El disparo aplica una fuerza
+                    horizontal importante.
+
+                    Tiene muy poca fuerza vertical
+                    para evitar que las cajas vuelen.
+                */
+
+                const horizontal =
+
+                    new THREE.Vector3(
+
+                        laser.direction.x,
+
+                        0,
+
+                        laser.direction.z
+
+                    );
+
+
+                if (
+                    horizontal.lengthSq() >
+                    0
+                ) {
+
+                    horizontal.normalize();
+
+                }
+
+
 
                 item.body
                     .applyImpulse(
@@ -1721,16 +3266,14 @@ function updateLasers(
                         {
 
                             x:
-                                laser.direction.x *
+                                horizontal.x *
                                 9,
 
                             y:
-                                laser.direction.y *
-                                9 +
-                                1.2,
+                                0.2,
 
                             z:
-                                laser.direction.z *
+                                horizontal.z *
                                 9
 
                         },
@@ -1742,31 +3285,14 @@ function updateLasers(
             }
 
 
+
             createImpact(
                 hit.point
             );
 
 
-            scene.remove(
-                laser.mesh
-            );
-
-
-            /*
-                Liberar memoria.
-            */
-
-            laser.mesh.geometry.dispose();
-
-            laser.mesh.material.dispose();
-
-
-            lasers.splice(
-
-                i,
-
-                1
-
+            removeLaser(
+                i
             );
 
 
@@ -1775,10 +3301,6 @@ function updateLasers(
         }
 
 
-
-        /* -------------------------
-           MOVIMIENTO DEL LÁSER
-        ------------------------- */
 
         laser.mesh.position
             .addScaledVector(
@@ -1795,30 +3317,12 @@ function updateLasers(
 
 
 
-        /* -------------------------
-           ELIMINAR LÁSER
-        ------------------------- */
-
         if (
             laser.life <= 0
         ) {
 
-            scene.remove(
-                laser.mesh
-            );
-
-
-            laser.mesh.geometry.dispose();
-
-            laser.mesh.material.dispose();
-
-
-            lasers.splice(
-
-                i,
-
-                1
-
+            removeLaser(
+                i
             );
 
         }
@@ -1830,7 +3334,7 @@ function updateLasers(
 
 
 /* =========================================================
-   SINCRONIZAR RAPIER CON THREE.JS
+   SINCRONIZAR FÍSICA DE CUBOS
 ========================================================= */
 
 function syncPhysics() {
@@ -1841,11 +3345,13 @@ function syncPhysics() {
     ) {
 
         const position =
+
             item.body
                 .translation();
 
 
         const rotation =
+
             item.body
                 .rotation();
 
@@ -1881,7 +3387,7 @@ function syncPhysics() {
 
 
 /* =========================================================
-   EVENTOS DE TECLADO
+   TECLADO
 ========================================================= */
 
 document.addEventListener(
@@ -1945,7 +3451,7 @@ renderer.domElement
 
 
 /* =========================================================
-   CONTROL DE CÁMARA CON MOUSE
+   MOUSE
 ========================================================= */
 
 document.addEventListener(
@@ -1966,10 +3472,12 @@ document.addEventListener(
         }
 
 
+
         camera.rotation.y -=
 
             event.movementX /
             500;
+
 
 
         camera.rotation.x -=
@@ -1978,12 +3486,6 @@ document.addEventListener(
             500;
 
 
-
-        /*
-            Evitar que la cámara pueda
-            darse completamente la vuelta
-            verticalmente.
-        */
 
         camera.rotation.x =
 
@@ -2028,18 +3530,96 @@ document.addEventListener(
 
 
 /* =========================================================
-   ANIMACIÓN PRINCIPAL
+   PASO FIJO DE FÍSICAS
+========================================================= */
+
+const FIXED_TIME_STEP =
+    1 / 60;
+
+
+let physicsAccumulator =
+    0;
+
+
+
+function updatePhysics(
+    deltaTime
+) {
+
+    physicsAccumulator +=
+        deltaTime;
+
+
+
+    while (
+
+        physicsAccumulator >=
+        FIXED_TIME_STEP
+
+    ) {
+
+        /*
+            Controles.
+        */
+
+        controls(
+            FIXED_TIME_STEP
+        );
+
+
+        /*
+            Calculamos el movimiento del jugador
+            ANTES de avanzar el mundo físico.
+        */
+
+        updatePlayer(
+            FIXED_TIME_STEP
+        );
+
+
+        /*
+            Avanzamos Rapier.
+        */
+
+        physicsWorld.timestep =
+            FIXED_TIME_STEP;
+
+
+        physicsWorld.step();
+
+
+        physicsAccumulator -=
+            FIXED_TIME_STEP;
+
+    }
+
+
+
+    /*
+        Actualizar posición visual
+        de todos los cuerpos.
+    */
+
+    syncPhysics();
+
+
+    /*
+        La cámara sigue al jugador.
+    */
+
+    updateCameraFromPlayer();
+
+}
+
+
+
+/* =========================================================
+   ANIMACIÓN
 ========================================================= */
 
 function animate() {
 
-    /*
-        Limitar delta para evitar problemas
-        físicos cuando la pestaña se congela
-        o pierde el foco.
-    */
-
-    const delta =
+    const deltaTime =
 
         Math.min(
 
@@ -2051,49 +3631,31 @@ function animate() {
 
 
 
-    /* -------------------------
-       JUGADOR
-    ------------------------- */
+    if (
+        scenarioReady
+    ) {
 
-    controls(
-        delta
-    );
+        /*
+            Jugador + cubos + escenario
+            utilizan Rapier.
+        */
 
-
-    updatePlayer(
-        delta
-    );
-
-
-
-    /* -------------------------
-       RAPIER
-    ------------------------- */
-
-    physicsWorld.timestep =
-        delta;
+        updatePhysics(
+            deltaTime
+        );
 
 
-    physicsWorld.step();
+        /*
+            Láser visual / impactos.
+        */
+
+        updateLasers(
+            deltaTime
+        );
+
+    }
 
 
-    syncPhysics();
-
-
-
-    /* -------------------------
-       LÁSERES
-    ------------------------- */
-
-    updateLasers(
-        delta
-    );
-
-
-
-    /* -------------------------
-       RENDER
-    ------------------------- */
 
     renderer.render(
 
