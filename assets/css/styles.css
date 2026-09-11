@@ -1,92 +1,202 @@
+/* =========================================
+   CONFIGURACIÓN GENERAL
+========================================= */
+
+* {
+    box-sizing: border-box;
+}
+
+
+/* =========================================
+   HTML Y BODY
+========================================= */
+
+html,
 body {
-	margin: 0;
-	background-color: #000;
-	color: #fff;
-	font-family: Monospace;
-	font-size: 13px;
-	line-height: 24px;
-	overscroll-behavior: none;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    overflow: hidden;
 }
 
-a {
-	color: #ff0;
-	text-decoration: none;
+
+body {
+    font-family: Arial, Helvetica, sans-serif;
+
+    background: #07111f;
+
+    color: white;
+
+    overscroll-behavior: none;
 }
 
-a:hover {
-	text-decoration: underline;
+
+/* =========================================
+   ESCENARIO THREE.JS
+========================================= */
+
+#scene-container {
+    position: fixed;
+
+    inset: 0;
+
+    width: 100%;
+    height: 100%;
+
+    background: #07111f;
 }
 
-button {
-	cursor: pointer;
-	text-transform: uppercase;
+
+#scene-container canvas {
+    display: block;
+
+    width: 100%;
+    height: 100%;
+
+    outline: none;
 }
 
-#info {
-	position: absolute;
-	top: 0px;
-	width: 100%;
-	padding: 10px;
-	box-sizing: border-box;
-	text-align: center;
-	-moz-user-select: none;
-	-webkit-user-select: none;
-	-ms-user-select: none;
-	user-select: none;
-	pointer-events: none;
-	z-index: 1;
+
+/* =========================================
+   HUD
+========================================= */
+
+.hud {
+    position: fixed;
+
+    z-index: 10;
+
+    top: 16px;
+    left: 16px;
+
+    max-width: 430px;
+
+    background: rgba(7, 17, 31, 0.82);
+
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+
+    border-left: 4px solid #22d3ee !important;
+
+    border-radius: 10px;
+
+    pointer-events: none;
+
+    user-select: none;
 }
 
-a, button, input, select {
-	pointer-events: auto;
+
+/* =========================================
+   TECLAS
+========================================= */
+
+.key {
+    min-width: 2rem;
+
+    display: inline-block;
+
+    text-align: center;
+
+    background-color: rgba(255, 255, 255, 0.12);
+
+    border: 1px solid rgba(255, 255, 255, 0.2);
+
+    color: #ffffff;
 }
 
-.lil-gui {
-	z-index: 2 !important;
+
+/* =========================================
+   MIRA CENTRAL
+========================================= */
+
+.crosshair {
+    position: fixed;
+
+    z-index: 11;
+
+    left: 50%;
+    top: 50%;
+
+    transform: translate(-50%, -50%);
+
+    font-size: 28px;
+    font-family: Arial, sans-serif;
+    font-weight: 300;
+
+    line-height: 1;
+
+    color: #67e8f9;
+
+    text-shadow:
+        0 0 5px #22d3ee,
+        0 0 12px #22d3ee;
+
+    pointer-events: none;
+
+    user-select: none;
 }
 
-@media all and (max-width: 640px) {
 
-	.lil-gui.root {
-		right: auto;
-		top: auto;
-		max-height: 50%;
-		max-width: 80%;
-		bottom: 0;
-		left: 0;
-	}
+/* =========================================
+   FOOTER
+========================================= */
 
+.app-footer {
+    position: fixed;
+
+    z-index: 10;
+
+    left: 0;
+    right: 0;
+    bottom: 0;
+
+    color: rgba(255, 255, 255, 0.9);
+
+    font-size: 0.78rem;
+
+    background: rgba(7, 17, 31, 0.82);
+
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+
+    pointer-events: none;
+
+    user-select: none;
 }
 
-#overlay {
-	position: absolute;
-	font-size: 16px;
-	z-index: 2;
-	top: 0;
-	left: 0;
-	width: 100%;
-	height: 100%;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	flex-direction: column;
-	background: rgba(0, 0, 0, 0.7);
-}
 
-#overlay button {
-	background: transparent;
-	border: 1px solid rgb(255, 255, 255);
-	border-radius: 4px;
-	color: #ffffff;
-	padding: 12px 18px;
-	text-transform: uppercase;
-	cursor: pointer;
-}
+/* =========================================
+   RESPONSIVE
+========================================= */
 
-#notSupported {
-	width: 50%;
-	margin: auto;
-	background-color: #f00;
-	margin-top: 20px;
-	padding: 10px;
+@media (max-width: 576px) {
+
+    .hud {
+        right: 12px;
+        left: 12px;
+
+        top: 12px;
+
+        max-width: none;
+
+        font-size: 0.82rem;
+    }
+
+
+    .hud h1 {
+        font-size: 1rem;
+    }
+
+
+    .app-footer {
+        font-size: 0.68rem;
+    }
+
+
+    .crosshair {
+        font-size: 24px;
+    }
+
 }
