@@ -12,13 +12,7 @@ import RAPIER from
     'https://cdn.skypack.dev/@dimforge/rapier3d-compat';
 
 
-
-/* =========================================================
-   INICIALIZAR RAPIER
-========================================================= */
-
 await RAPIER.init();
-
 
 
 /* =========================================================
@@ -26,10 +20,7 @@ await RAPIER.init();
 ========================================================= */
 
 const container =
-    document.getElementById(
-        'scene-container'
-    );
-
+    document.getElementById('scene-container');
 
 
 /* =========================================================
@@ -39,12 +30,8 @@ const container =
 const scene =
     new THREE.Scene();
 
-
 scene.background =
-    new THREE.Color(
-        0x07111f
-    );
-
+    new THREE.Color(0x07111f);
 
 scene.fog =
     new THREE.Fog(
@@ -54,29 +41,19 @@ scene.fog =
     );
 
 
-
 /* =========================================================
    CÁMARA
 ========================================================= */
 
 const camera =
     new THREE.PerspectiveCamera(
-
         70,
-
-        window.innerWidth /
-        window.innerHeight,
-
+        window.innerWidth / window.innerHeight,
         0.1,
-
         1000
-
     );
 
-
-camera.rotation.order =
-    'YXZ';
-
+camera.rotation.order = 'YXZ';
 
 
 /* =========================================================
@@ -85,55 +62,37 @@ camera.rotation.order =
 
 const renderer =
     new THREE.WebGLRenderer({
-
         antialias: true
-
     });
 
-
 renderer.setPixelRatio(
-
     Math.min(
         window.devicePixelRatio,
         2
     )
-
 );
-
 
 renderer.setSize(
-
     window.innerWidth,
-
     window.innerHeight
-
 );
 
-
-renderer.shadowMap.enabled =
-    true;
-
+renderer.shadowMap.enabled = true;
 
 renderer.shadowMap.type =
     THREE.PCFSoftShadowMap;
 
-
 renderer.outputColorSpace =
     THREE.SRGBColorSpace;
-
 
 renderer.toneMapping =
     THREE.ACESFilmicToneMapping;
 
-
-renderer.toneMappingExposure =
-    1.1;
-
+renderer.toneMappingExposure = 1.1;
 
 container.appendChild(
     renderer.domElement
 );
-
 
 
 /* =========================================================
@@ -142,15 +101,10 @@ container.appendChild(
 
 const hemisphereLight =
     new THREE.HemisphereLight(
-
         0xbfe3ff,
-
         0x182030,
-
         1.8
-
     );
-
 
 scene.add(
     hemisphereLight
@@ -159,67 +113,36 @@ scene.add(
 
 const sun =
     new THREE.DirectionalLight(
-
         0xffffff,
-
         3
-
     );
 
-
 sun.position.set(
-
     -5,
     18,
     6
-
 );
 
-
-sun.castShadow =
-    true;
-
+sun.castShadow = true;
 
 sun.shadow.mapSize.set(
-
     2048,
     2048
-
 );
 
+sun.shadow.camera.near = 0.5;
+sun.shadow.camera.far = 100;
 
-sun.shadow.camera.near =
-    0.5;
+sun.shadow.camera.left = -35;
+sun.shadow.camera.right = 35;
+sun.shadow.camera.top = 35;
+sun.shadow.camera.bottom = -35;
 
-
-sun.shadow.camera.far =
-    100;
-
-
-sun.shadow.camera.left =
-    -35;
-
-
-sun.shadow.camera.right =
-    35;
-
-
-sun.shadow.camera.top =
-    35;
-
-
-sun.shadow.camera.bottom =
-    -35;
-
-
-sun.shadow.bias =
-    -0.0001;
-
+sun.shadow.bias = -0.0001;
 
 scene.add(
     sun
 );
-
 
 
 /* =========================================================
@@ -230,102 +153,60 @@ const clock =
     new THREE.Clock();
 
 
-
 /* =========================================================
-   MUNDO FÍSICO RAPIER
+   MUNDO FÍSICO
 ========================================================= */
 
 const gravity = {
-
     x: 0,
-
     y: -9.81,
-
     z: 0
-
 };
-
 
 const physicsWorld =
     new RAPIER.World(
         gravity
     );
 
-
-physicsWorld.integrationParameters.maxCcdSubsteps =
-    4;
-
+physicsWorld
+    .integrationParameters
+    .maxCcdSubsteps = 4;
 
 
 /* =========================================================
    JUGADOR
 ========================================================= */
 
-/*
-    Medidas aproximadas equivalentes
-    a la cápsula que utilizábamos antes.
-*/
+const PLAYER_RADIUS = 0.35;
 
-const PLAYER_RADIUS =
-    0.35;
-
-
-const PLAYER_HALF_HEIGHT =
-    0.325;
-
-
-/*
-    Centro del jugador.
-*/
+const PLAYER_HALF_HEIGHT = 0.325;
 
 const PLAYER_START = {
-
     x: 0,
-
     y: 0.675,
-
     z: 0
-
 };
 
-
-/*
-    Cámara situada aproximadamente
-    a la altura de los ojos.
-*/
-
-const PLAYER_EYE_OFFSET =
-    0.325;
-
+const PLAYER_EYE_OFFSET = 0.325;
 
 
 /* =========================================================
-   CUERPO CINEMÁTICO DEL JUGADOR
+   CUERPO DEL JUGADOR
 ========================================================= */
 
 const playerBodyDesc =
-
     RAPIER.RigidBodyDesc
         .kinematicPositionBased()
-
         .setTranslation(
-
             PLAYER_START.x,
-
             PLAYER_START.y,
-
             PLAYER_START.z
-
         );
-
 
 const playerBody =
-
-    physicsWorld
-        .createRigidBody(
-            playerBodyDesc
-        );
-
+    physicsWorld.createRigidBody(
+        playerBodyDesc
+    );
 
 
 /* =========================================================
@@ -333,107 +214,50 @@ const playerBody =
 ========================================================= */
 
 const playerColliderDesc =
-
     RAPIER.ColliderDesc
         .capsule(
-
             PLAYER_HALF_HEIGHT,
-
             PLAYER_RADIUS
-
         )
-
-        .setFriction(
-            0
-        );
-
+        .setFriction(0);
 
 const playerCollider =
-
-    physicsWorld
-        .createCollider(
-
-            playerColliderDesc,
-
-            playerBody
-
-        );
-
+    physicsWorld.createCollider(
+        playerColliderDesc,
+        playerBody
+    );
 
 
 /* =========================================================
    CHARACTER CONTROLLER
 ========================================================= */
 
-/*
-    El pequeño offset evita que la cápsula
-    quede pegada exactamente a las superficies.
-*/
-
 const characterController =
-
     physicsWorld
         .createCharacterController(
             0.025
         );
 
-
-/*
-    IMPORTANTE:
-
-    false significa que NO intentará subir
-    automáticamente encima de los cubos dinámicos.
-
-    Por lo tanto, al caminar contra un cubo,
-    chocaremos contra él.
-*/
-
 characterController.enableAutostep(
-
     0.25,
-
     0.15,
-
     false
-
 );
-
-
-/*
-    Mantiene al jugador pegado al suelo
-    al caminar por pequeñas pendientes.
-*/
 
 characterController.enableSnapToGround(
     0.2
 );
 
-
-/*
-    Pendiente máxima.
-*/
-
 characterController.setMaxSlopeClimbAngle(
-
     45 *
     Math.PI /
     180
-
 );
-
-
-/*
-    Permitir que el jugador empuje
-    objetos dinámicos.
-
-    El jugador no los atraviesa.
-*/
 
 characterController
     .setApplyImpulsesToDynamicBodies(
         true
     );
-
 
 characterController
     .setCharacterMass(
@@ -441,34 +265,23 @@ characterController
     );
 
 
-
 /* =========================================================
-   VELOCIDAD DEL JUGADOR
+   MOVIMIENTO DEL JUGADOR
 ========================================================= */
 
 const playerVelocity =
     new THREE.Vector3();
 
-
 const playerDirection =
     new THREE.Vector3();
 
-
-let playerOnFloor =
-    false;
-
-
-
-/* =========================================================
-   TECLADO
-========================================================= */
+let playerOnFloor = false;
 
 const keyStates = {};
 
 
-
 /* =========================================================
-   OBJETOS
+   OBJETOS DEL ESCENARIO
 ========================================================= */
 
 const physicalObjects = [];
@@ -479,70 +292,113 @@ const scenarioMeshes = [];
 
 const spawnPositions = [];
 
+let scenarioBounds = null;
 
-let scenarioBounds =
-    null;
-
-
-let scenarioReady =
-    false;
-
+let scenarioReady = false;
 
 
 /* =========================================================
-   CONFIGURACIÓN DE CUBOS
+   TIPOS DE FORMAS
+
+   EXACTAMENTE 5 TIPOS DIFERENTES
+========================================================= */
+
+const SHAPE_TYPES = [
+
+    'cube',
+
+    'sphere',
+
+    'cylinder',
+
+    'cone',
+
+    'dodecahedron'
+
+];
+
+
+/* =========================================================
+   CONFIGURACIÓN DE GENERACIÓN
 ========================================================= */
 
 /*
-    Cubos completamente aleatorios
-    repartidos por el escenario.
+    Objetos individuales repartidos
+    aleatoriamente por el escenario.
+
+    Los primeros cinco garantizan que
+    aparezca una figura de cada tipo.
 */
 
-const RANDOM_BOX_COUNT =
-    12;
+const RANDOM_OBJECT_COUNT = 15;
 
 
 /*
-    Número de pirámides.
+    Pirámides construidas con cubos.
 */
 
-const PYRAMID_COUNT =
-    2;
+const PYRAMID_COUNT = 2;
+
+const PYRAMID_BASE = 4;
 
 
-/*
-    Cada pirámide tendrá:
+const SPAWN_MARGIN = 2;
 
-    nivel 1 = 4 cubos
-    nivel 2 = 3 cubos
-    nivel 3 = 2 cubos
-    nivel 4 = 1 cubo
+const PLAYER_SAFE_DISTANCE = 4;
 
-    Total: 10 cubos.
-*/
-
-const PYRAMID_BASE =
-    4;
-
-
-const SPAWN_MARGIN =
-    2;
-
-
-const PLAYER_SAFE_DISTANCE =
-    4;
-
-
-const MAX_SPAWN_ATTEMPTS =
-    200;
-
+const MAX_SPAWN_ATTEMPTS = 250;
 
 
 /* =========================================================
-   RAYCASTER PARA DETECTAR SUELO
+   CONFIGURACIÓN DEL LÁSER
+========================================================= */
+
+let isChargingLaser = false;
+
+let laserChargeStart = 0;
+
+
+/*
+    Tiempo necesario para llegar
+    a máxima potencia.
+*/
+
+const MAX_LASER_CHARGE_TIME = 1.5;
+
+
+/*
+    Fuerza normal.
+*/
+
+const NORMAL_LASER_FORCE = 9;
+
+
+/*
+    Fuerza máxima.
+
+    Bastante superior a la versión anterior.
+*/
+
+const MAX_LASER_FORCE = 120;
+
+
+/*
+    Onda expansiva.
+*/
+
+const MAX_SHOCKWAVE_RADIUS = 3.8;
+
+const MAX_SHOCKWAVE_FORCE = 38;
+
+
+/* =========================================================
+   RAYCASTERS
 ========================================================= */
 
 const groundRaycaster =
+    new THREE.Raycaster();
+
+const clearanceRaycaster =
     new THREE.Raycaster();
 
 
@@ -554,17 +410,70 @@ const downDirection =
     );
 
 
+const upDirection =
+    new THREE.Vector3(
+        0,
+        1,
+        0
+    );
+
+
 const rayOrigin =
     new THREE.Vector3();
 
+const clearanceOrigin =
+    new THREE.Vector3();
 
 const worldNormal =
     new THREE.Vector3();
 
-
 const normalMatrix =
     new THREE.Matrix3();
 
+
+/* =========================================================
+   PALETA DE COLORES
+========================================================= */
+
+const OBJECT_COLORS = [
+
+    0x22d3ee, // cyan
+
+    0xf97316, // naranja
+
+    0x84cc16, // verde
+
+    0xa855f7, // morado
+
+    0xef4444, // rojo
+
+    0xeab308, // amarillo
+
+    0x3b82f6, // azul
+
+    0xec4899, // rosa
+
+    0x14b8a6, // turquesa
+
+    0xf59e0b, // ámbar
+
+    0x8b5cf6, // violeta
+
+    0x10b981  // esmeralda
+
+];
+
+
+function randomObjectColor() {
+
+    return OBJECT_COLORS[
+        Math.floor(
+            Math.random() *
+            OBJECT_COLORS.length
+        )
+    ];
+
+}
 
 
 /* =========================================================
@@ -580,11 +489,8 @@ function createStaticColliderFromMesh(
 
 
     if (
-
         !geometry ||
-
         !geometry.attributes.position
-
     ) {
 
         return;
@@ -601,12 +507,8 @@ function createStaticColliderFromMesh(
 
 
     const vertices =
-
         new Float32Array(
-
-            vertexCount *
-            3
-
+            vertexCount * 3
         );
 
 
@@ -614,61 +516,38 @@ function createStaticColliderFromMesh(
         new THREE.Vector3();
 
 
-
-    /* =====================================================
-       VÉRTICES
-    ===================================================== */
-
     for (
-
         let i = 0;
-
         i < vertexCount;
-
         i++
-
     ) {
 
         vertex
             .fromBufferAttribute(
-
                 position,
-
                 i
-
             )
-
             .applyMatrix4(
-
                 mesh.matrixWorld
-
             );
 
 
         vertices[
             i * 3
-        ] =
-            vertex.x;
+        ] = vertex.x;
 
 
         vertices[
             i * 3 + 1
-        ] =
-            vertex.y;
+        ] = vertex.y;
 
 
         vertices[
             i * 3 + 2
-        ] =
-            vertex.z;
+        ] = vertex.z;
 
     }
 
-
-
-    /* =====================================================
-       ÍNDICES
-    ===================================================== */
 
     let indices;
 
@@ -688,13 +567,9 @@ function createStaticColliderFromMesh(
 
 
         for (
-
             let i = 0;
-
             i < original.length;
-
             i++
-
         ) {
 
             indices[i] =
@@ -705,15 +580,9 @@ function createStaticColliderFromMesh(
     } else {
 
         const validCount =
-
             Math.floor(
-
-                vertexCount /
-                3
-
-            )
-
-            * 3;
+                vertexCount / 3
+            ) * 3;
 
 
         indices =
@@ -723,22 +592,16 @@ function createStaticColliderFromMesh(
 
 
         for (
-
             let i = 0;
-
             i < validCount;
-
             i++
-
         ) {
 
-            indices[i] =
-                i;
+            indices[i] = i;
 
         }
 
     }
-
 
 
     if (
@@ -750,42 +613,29 @@ function createStaticColliderFromMesh(
     }
 
 
-
-    /* =====================================================
-       TRIMESH RAPIER
-    ===================================================== */
-
     const colliderDesc =
-
         RAPIER.ColliderDesc
             .trimesh(
-
                 vertices,
-
                 indices
-
             )
-
             .setFriction(
                 0.9
             )
-
             .setRestitution(
                 0.02
             );
 
 
-    physicsWorld
-        .createCollider(
-            colliderDesc
-        );
+    physicsWorld.createCollider(
+        colliderDesc
+    );
 
 }
 
 
-
 /* =========================================================
-   CREAR FÍSICA DEL ESCENARIO COMPLETO
+   CREAR FÍSICA COMPLETA DEL ESCENARIO
 ========================================================= */
 
 function createScenarioPhysics(
@@ -795,10 +645,6 @@ function createScenarioPhysics(
     model.updateMatrixWorld(
         true
     );
-
-
-    let total =
-        0;
 
 
     model.traverse(
@@ -823,26 +669,535 @@ function createScenarioPhysics(
                 child
             );
 
-
-            total++;
-
         }
-
-    );
-
-
-    console.log(
-
-        `Meshes físicas del escenario: ${total}`
 
     );
 
 }
 
 
+/* =========================================================
+   DESCRIPCIÓN DE LAS CINCO FIGURAS
+
+   Aquí se mantiene una escala semejante
+   entre todos los tipos.
+========================================================= */
+
+function getShapeConfiguration(
+    type,
+    scale
+) {
+
+    switch (
+        type
+    ) {
+
+        /* =================================================
+           1. CUBO
+        ================================================= */
+
+        case 'cube': {
+
+            const size =
+                scale;
+
+
+            return {
+
+                width:
+                    size,
+
+                height:
+                    size,
+
+                depth:
+                    size,
+
+                geometry:
+                    new THREE.BoxGeometry(
+                        size,
+                        size,
+                        size
+                    ),
+
+                volume:
+                    size *
+                    size *
+                    size,
+
+                colliderFactory:
+                    () =>
+                        RAPIER.ColliderDesc
+                            .cuboid(
+                                size / 2,
+                                size / 2,
+                                size / 2
+                            )
+
+            };
+
+        }
+
+
+        /* =================================================
+           2. ESFERA
+        ================================================= */
+
+        case 'sphere': {
+
+            const radius =
+                scale * 0.52;
+
+
+            return {
+
+                width:
+                    radius * 2,
+
+                height:
+                    radius * 2,
+
+                depth:
+                    radius * 2,
+
+                geometry:
+                    new THREE.SphereGeometry(
+                        radius,
+                        24,
+                        18
+                    ),
+
+                volume:
+                    (
+                        4 /
+                        3
+                    ) *
+                    Math.PI *
+                    Math.pow(
+                        radius,
+                        3
+                    ),
+
+                colliderFactory:
+                    () =>
+                        RAPIER.ColliderDesc
+                            .ball(
+                                radius
+                            )
+
+            };
+
+        }
+
+
+        /* =================================================
+           3. CILINDRO
+        ================================================= */
+
+        case 'cylinder': {
+
+            const radius =
+                scale * 0.42;
+
+
+            const height =
+                scale * 1.15;
+
+
+            return {
+
+                width:
+                    radius * 2,
+
+                height,
+
+                depth:
+                    radius * 2,
+
+                geometry:
+                    new THREE.CylinderGeometry(
+                        radius,
+                        radius,
+                        height,
+                        24
+                    ),
+
+                volume:
+                    Math.PI *
+                    radius *
+                    radius *
+                    height,
+
+                colliderFactory:
+                    () =>
+                        RAPIER.ColliderDesc
+                            .cylinder(
+                                height / 2,
+                                radius
+                            )
+
+            };
+
+        }
+
+
+        /* =================================================
+           4. CONO
+        ================================================= */
+
+        case 'cone': {
+
+            const radius =
+                scale * 0.48;
+
+
+            const height =
+                scale * 1.25;
+
+
+            return {
+
+                width:
+                    radius * 2,
+
+                height,
+
+                depth:
+                    radius * 2,
+
+                geometry:
+                    new THREE.ConeGeometry(
+                        radius,
+                        height,
+                        24
+                    ),
+
+                volume:
+                    (
+                        Math.PI *
+                        radius *
+                        radius *
+                        height
+                    ) /
+                    3,
+
+                colliderFactory:
+                    () =>
+                        RAPIER.ColliderDesc
+                            .cone(
+                                height / 2,
+                                radius
+                            )
+
+            };
+
+        }
+
+
+        /* =================================================
+           5. DODECAEDRO
+        ================================================= */
+
+        case 'dodecahedron': {
+
+            const radius =
+                scale * 0.58;
+
+
+            const geometry =
+                new THREE.DodecahedronGeometry(
+                    radius,
+                    0
+                );
+
+
+            return {
+
+                width:
+                    radius * 2,
+
+                height:
+                    radius * 2,
+
+                depth:
+                    radius * 2,
+
+                geometry,
+
+                /*
+                    Aproximación de volumen suficiente
+                    para calcular la densidad.
+                */
+
+                volume:
+                    (
+                        4 /
+                        3
+                    ) *
+                    Math.PI *
+                    Math.pow(
+                        radius,
+                        3
+                    ),
+
+                colliderFactory:
+                    () => {
+
+                        const position =
+                            geometry
+                                .attributes
+                                .position;
+
+
+                        const vertices =
+                            new Float32Array(
+                                position.count * 3
+                            );
+
+
+                        for (
+                            let i = 0;
+                            i < position.count;
+                            i++
+                        ) {
+
+                            vertices[
+                                i * 3
+                            ] =
+                                position.getX(i);
+
+
+                            vertices[
+                                i * 3 + 1
+                            ] =
+                                position.getY(i);
+
+
+                            vertices[
+                                i * 3 + 2
+                            ] =
+                                position.getZ(i);
+
+                        }
+
+
+                        /*
+                            Collider convexo real
+                            del dodecaedro.
+                        */
+
+                        const convex =
+                            RAPIER.ColliderDesc
+                                .convexHull(
+                                    vertices
+                                );
+
+
+                        /*
+                            En caso de que Rapier no
+                            pueda crear el convex hull,
+                            usamos una esfera aproximada.
+                        */
+
+                        return (
+                            convex ||
+                            RAPIER.ColliderDesc
+                                .ball(
+                                    radius * 0.95
+                                )
+                        );
+
+                    }
+
+            };
+
+        }
+
+
+        default:
+
+            return getShapeConfiguration(
+                'cube',
+                scale
+            );
+
+    }
+
+}
+
 
 /* =========================================================
-   CREAR CUBO FÍSICO
+   CREAR OBJETO DINÁMICO
+========================================================= */
+
+function createDynamicShape(
+
+    type,
+
+    x,
+    y,
+    z,
+
+    scale,
+
+    mass = 4,
+
+    color = randomObjectColor()
+
+) {
+
+    const config =
+        getShapeConfiguration(
+            type,
+            scale
+        );
+
+
+    /* =====================================================
+       THREE.JS
+    ===================================================== */
+
+    const material =
+        new THREE.MeshStandardMaterial({
+
+            color,
+
+            roughness:
+                0.65,
+
+            metalness:
+                0.08
+
+        });
+
+
+    const mesh =
+        new THREE.Mesh(
+
+            config.geometry,
+
+            material
+
+        );
+
+
+    mesh.position.set(
+        x,
+        y,
+        z
+    );
+
+
+    mesh.castShadow = true;
+
+    mesh.receiveShadow = true;
+
+
+    scene.add(
+        mesh
+    );
+
+
+    /* =====================================================
+       RAPIER
+    ===================================================== */
+
+    const bodyDesc =
+        RAPIER.RigidBodyDesc
+            .dynamic()
+            .setTranslation(
+                x,
+                y,
+                z
+            )
+            .setCcdEnabled(
+                true
+            )
+            .setLinearDamping(
+                0.08
+            )
+            .setAngularDamping(
+                0.15
+            );
+
+
+    const body =
+        physicsWorld
+            .createRigidBody(
+                bodyDesc
+            );
+
+
+    const density =
+        mass /
+        Math.max(
+            config.volume,
+            0.01
+        );
+
+
+    const colliderDesc =
+        config
+            .colliderFactory()
+            .setDensity(
+                density
+            )
+            .setFriction(
+                0.85
+            )
+            .setRestitution(
+                0.04
+            );
+
+
+    const collider =
+        physicsWorld
+            .createCollider(
+
+                colliderDesc,
+
+                body
+
+            );
+
+
+    const object = {
+
+        type,
+
+        mesh,
+
+        body,
+
+        collider,
+
+        width:
+            config.width,
+
+        height:
+            config.height,
+
+        depth:
+            config.depth
+
+    };
+
+
+    physicalObjects.push(
+        object
+    );
+
+
+    return object;
+
+}
+
+
+/* =========================================================
+   CREAR CUBO
+
+   Se mantiene esta función para las
+   pirámides.
 ========================================================= */
 
 function createDynamicBox(
@@ -857,42 +1212,33 @@ function createDynamicBox(
 
     mass = 4,
 
-    color = 0x94a3b8
+    color = randomObjectColor()
 
 ) {
 
-    /* =====================================================
-       THREE.JS
-    ===================================================== */
-
     const geometry =
-
         new THREE.BoxGeometry(
-
             sx,
             sy,
             sz
-
         );
 
 
     const material =
-
         new THREE.MeshStandardMaterial({
 
             color,
 
             roughness:
-                0.72,
+                0.7,
 
             metalness:
-                0.05
+                0.06
 
         });
 
 
     const mesh =
-
         new THREE.Mesh(
 
             geometry,
@@ -903,20 +1249,15 @@ function createDynamicBox(
 
 
     mesh.position.set(
-
         x,
         y,
         z
-
     );
 
 
-    mesh.castShadow =
-        true;
+    mesh.castShadow = true;
 
-
-    mesh.receiveShadow =
-        true;
+    mesh.receiveShadow = true;
 
 
     scene.add(
@@ -924,102 +1265,62 @@ function createDynamicBox(
     );
 
 
-
-    /* =====================================================
-       CUERPO FÍSICO
-    ===================================================== */
-
     const bodyDesc =
-
         RAPIER.RigidBodyDesc
             .dynamic()
-
             .setTranslation(
-
                 x,
                 y,
                 z
-
             )
-
-            /*
-                Evita atravesar superficies
-                a altas velocidades.
-            */
-
             .setCcdEnabled(
                 true
             )
-
             .setLinearDamping(
                 0.08
             )
-
             .setAngularDamping(
                 0.15
             );
 
 
     const body =
+        physicsWorld.createRigidBody(
+            bodyDesc
+        );
 
-        physicsWorld
-            .createRigidBody(
-                bodyDesc
-            );
-
-
-
-    /* =====================================================
-       COLLIDER
-    ===================================================== */
 
     const volume =
-
         Math.max(
-
-            sx *
-            sy *
-            sz,
-
+            sx * sy * sz,
             0.01
-
         );
 
 
     const density =
-
         mass /
         volume;
 
 
     const colliderDesc =
-
         RAPIER.ColliderDesc
             .cuboid(
-
                 sx / 2,
-
                 sy / 2,
-
                 sz / 2
-
             )
-
             .setDensity(
                 density
             )
-
             .setFriction(
                 0.9
             )
-
             .setRestitution(
                 0.03
             );
 
 
     const collider =
-
         physicsWorld
             .createCollider(
 
@@ -1030,12 +1331,10 @@ function createDynamicBox(
             );
 
 
+    const object = {
 
-    /* =====================================================
-       GUARDAR REFERENCIAS
-    ===================================================== */
-
-    physicalObjects.push({
+        type:
+            'cube',
 
         mesh,
 
@@ -1043,35 +1342,30 @@ function createDynamicBox(
 
         collider,
 
-        size: {
+        width:
+            sx,
 
-            x: sx,
+        height:
+            sy,
 
-            y: sy,
-
-            z: sz
-
-        }
-
-    });
-
-
-    return {
-
-        mesh,
-
-        body,
-
-        collider
+        depth:
+            sz
 
     };
+
+
+    physicalObjects.push(
+        object
+    );
+
+
+    return object;
 
 }
 
 
-
 /* =========================================================
-   ENCONTRAR EL SUELO
+   BUSCAR SUELO
 ========================================================= */
 
 function findGroundPosition(
@@ -1080,17 +1374,13 @@ function findGroundPosition(
 ) {
 
     if (
-
         !scenarioBounds ||
-
         scenarioMeshes.length === 0
-
     ) {
 
         return null;
 
     }
-
 
 
     rayOrigin.set(
@@ -1115,18 +1405,14 @@ function findGroundPosition(
 
 
     groundRaycaster.far =
-
         (
             scenarioBounds.max.y -
             scenarioBounds.min.y
-        )
-
-        + 30;
-
+        ) +
+        30;
 
 
     const intersections =
-
         groundRaycaster
             .intersectObjects(
 
@@ -1135,7 +1421,6 @@ function findGroundPosition(
                 false
 
             );
-
 
 
     for (
@@ -1152,12 +1437,9 @@ function findGroundPosition(
         }
 
 
-
         normalMatrix
             .getNormalMatrix(
-
                 hit.object.matrixWorld
-
             );
 
 
@@ -1165,17 +1447,14 @@ function findGroundPosition(
             .copy(
                 hit.face.normal
             )
-
             .applyMatrix3(
                 normalMatrix
             )
-
             .normalize();
 
 
-
         /*
-            Solo superficies suficientemente
+            Solo superficies prácticamente
             horizontales.
         */
 
@@ -1203,26 +1482,416 @@ function findGroundPosition(
 }
 
 
+/* =========================================================
+   COMPROBAR SUELO DE TODO EL OBJETO
+========================================================= */
+
+function findFlatSurfaceForObject(
+
+    x,
+    z,
+
+    width,
+    depth
+
+) {
+
+    const offsetX =
+        width * 0.42;
+
+
+    const offsetZ =
+        depth * 0.42;
+
+
+    const samples = [
+
+        [0, 0],
+
+        [offsetX, offsetZ],
+
+        [-offsetX, offsetZ],
+
+        [offsetX, -offsetZ],
+
+        [-offsetX, -offsetZ],
+
+        [offsetX, 0],
+
+        [-offsetX, 0],
+
+        [0, offsetZ],
+
+        [0, -offsetZ]
+
+    ];
+
+
+    const heights = [];
+
+    let centerGround = null;
+
+
+    for (
+        const [dx, dz]
+        of samples
+    ) {
+
+        const ground =
+            findGroundPosition(
+
+                x + dx,
+
+                z + dz
+
+            );
+
+
+        if (
+            !ground
+        ) {
+
+            return null;
+
+        }
+
+
+        if (
+            dx === 0 &&
+            dz === 0
+        ) {
+
+            centerGround =
+                ground;
+
+        }
+
+
+        heights.push(
+            ground.point.y
+        );
+
+    }
+
+
+    const minHeight =
+        Math.min(
+            ...heights
+        );
+
+
+    const maxHeight =
+        Math.max(
+            ...heights
+        );
+
+
+    /*
+        Evitar escalones,
+        agujeros y paredes.
+    */
+
+    if (
+        maxHeight -
+        minHeight >
+        0.16
+    ) {
+
+        return null;
+
+    }
+
+
+    return centerGround;
+
+}
+
 
 /* =========================================================
-   COMPROBAR POSICIÓN LIBRE
+   COMPROBAR RAYO CONTRA ESCENARIO
+========================================================= */
+
+function scenarioRayHit(
+
+    origin,
+
+    direction,
+
+    distance
+
+) {
+
+    clearanceRaycaster.set(
+        origin,
+        direction
+    );
+
+
+    clearanceRaycaster.near = 0;
+
+    clearanceRaycaster.far =
+        distance;
+
+
+    const hits =
+        clearanceRaycaster
+            .intersectObjects(
+
+                scenarioMeshes,
+
+                false
+
+            );
+
+
+    return hits.length > 0;
+
+}
+
+
+/* =========================================================
+   COMPROBAR VOLUMEN LIBRE
+========================================================= */
+
+function isSpawnVolumeClear(
+
+    x,
+
+    groundY,
+
+    z,
+
+    width,
+
+    height,
+
+    depth,
+
+    extraClearance = 0.18
+
+) {
+
+    const levels = [
+
+        groundY +
+        Math.min(
+            Math.max(
+                height * 0.25,
+                0.12
+            ),
+            0.3
+        ),
+
+        groundY +
+        height * 0.5,
+
+        groundY +
+        Math.max(
+            height - 0.12,
+            height * 0.7
+        )
+
+    ];
+
+
+    const xDistance =
+        width / 2 +
+        extraClearance;
+
+
+    const zDistance =
+        depth / 2 +
+        extraClearance;
+
+
+    const diagonalDistance =
+        Math.hypot(
+            width / 2,
+            depth / 2
+        ) +
+        extraClearance;
+
+
+    const directions = [
+
+        {
+            vector:
+                new THREE.Vector3(
+                    1, 0, 0
+                ),
+
+            distance:
+                xDistance
+        },
+
+        {
+            vector:
+                new THREE.Vector3(
+                    -1, 0, 0
+                ),
+
+            distance:
+                xDistance
+        },
+
+        {
+            vector:
+                new THREE.Vector3(
+                    0, 0, 1
+                ),
+
+            distance:
+                zDistance
+        },
+
+        {
+            vector:
+                new THREE.Vector3(
+                    0, 0, -1
+                ),
+
+            distance:
+                zDistance
+        },
+
+        {
+            vector:
+                new THREE.Vector3(
+                    1, 0, 1
+                ).normalize(),
+
+            distance:
+                diagonalDistance
+        },
+
+        {
+            vector:
+                new THREE.Vector3(
+                    -1, 0, 1
+                ).normalize(),
+
+            distance:
+                diagonalDistance
+        },
+
+        {
+            vector:
+                new THREE.Vector3(
+                    1, 0, -1
+                ).normalize(),
+
+            distance:
+                diagonalDistance
+        },
+
+        {
+            vector:
+                new THREE.Vector3(
+                    -1, 0, -1
+                ).normalize(),
+
+            distance:
+                diagonalDistance
+        }
+
+    ];
+
+
+    /*
+        Paredes laterales.
+    */
+
+    for (
+        const y
+        of levels
+    ) {
+
+        clearanceOrigin.set(
+            x,
+            y,
+            z
+        );
+
+
+        for (
+            const check
+            of directions
+        ) {
+
+            if (
+                scenarioRayHit(
+
+                    clearanceOrigin,
+
+                    check.vector,
+
+                    check.distance
+
+                )
+            ) {
+
+                return false;
+
+            }
+
+        }
+
+    }
+
+
+    /*
+        Techo o estructura superior.
+    */
+
+    clearanceOrigin.set(
+
+        x,
+
+        groundY + 0.08,
+
+        z
+
+    );
+
+
+    if (
+        scenarioRayHit(
+
+            clearanceOrigin,
+
+            upDirection,
+
+            height +
+            extraClearance
+
+        )
+    ) {
+
+        return false;
+
+    }
+
+
+    return true;
+
+}
+
+
+/* =========================================================
+   POSICIÓN LIBRE DE OTROS OBJETOS
 ========================================================= */
 
 function isSpawnPositionFree(
 
     x,
+
     z,
+
     radius
 
 ) {
 
-    /*
-        Evitar aparecer encima
-        del jugador.
-    */
-
     const distancePlayer =
-
         Math.hypot(
 
             x -
@@ -1244,19 +1913,12 @@ function isSpawnPositionFree(
     }
 
 
-
-    /*
-        Evitar generar estructuras
-        unas encima de otras.
-    */
-
     for (
         const position
         of spawnPositions
     ) {
 
         const distance =
-
             Math.hypot(
 
                 x -
@@ -1269,12 +1931,9 @@ function isSpawnPositionFree(
 
 
         if (
-
             distance <
-
             radius +
             position.radius
-
         ) {
 
             return false;
@@ -1289,9 +1948,8 @@ function isSpawnPositionFree(
 }
 
 
-
 /* =========================================================
-   REGISTRAR ESPACIO OCUPADO
+   REGISTRAR POSICIÓN UTILIZADA
 ========================================================= */
 
 function registerSpawn(
@@ -1317,9 +1975,8 @@ function registerSpawn(
 }
 
 
-
 /* =========================================================
-   BUSCAR ZONA PLANA
+   BUSCAR ZONA PLANA GRANDE
 ========================================================= */
 
 function findFlatArea(
@@ -1364,7 +2021,6 @@ function findFlatArea(
     ) {
 
         const ground =
-
             findGroundPosition(
 
                 x + dx,
@@ -1390,7 +2046,6 @@ function findFlatArea(
     }
 
 
-
     const minHeight =
         Math.min(
             ...heights
@@ -1403,18 +2058,10 @@ function findFlatArea(
         );
 
 
-    /*
-        No generar una pirámide
-        sobre una zona inclinada.
-    */
-
     if (
-
         maxHeight -
         minHeight >
-
         0.18
-
     ) {
 
         return null;
@@ -1423,294 +2070,280 @@ function findFlatArea(
 
 
     return {
-
         y:
             heights[0]
-
     };
 
 }
 
 
-
 /* =========================================================
-   COLOR ALEATORIO DE LOS CUBOS
+   GENERAR UNA FORMA ALEATORIA
 ========================================================= */
 
-function randomBoxColor() {
+function spawnRandomShape(
+    type
+) {
 
-    const colors = [
+    /*
+        Escala base de la figura.
 
-        0x94a3b8,
+        Las cinco figuras utilizan
+        aproximadamente la misma escala
+        visual general.
+    */
 
-        0x64748b,
-
-        0xcbd5e1,
-
-        0x78909c,
-
-        0x9ca3af,
-
-        0x7dd3fc
-
-    ];
-
-
-    return colors[
-
-        Math.floor(
-
-            Math.random() *
-            colors.length
-
-        )
-
-    ];
-
-}
+    const scale =
+        THREE.MathUtils.randFloat(
+            0.75,
+            1.35
+        );
 
 
+    /*
+        Obtenemos primero sus dimensiones
+        para validar el espacio.
+    */
 
-/* =========================================================
-   GENERAR CUBOS ALEATORIOS DE DIFERENTES TAMAÑOS
-========================================================= */
+    const config =
+        getShapeConfiguration(
+            type,
+            scale
+        );
 
-function generateRandomBoxes() {
+
+    const radius =
+        Math.max(
+            config.width,
+            config.depth
+        ) *
+        0.65;
+
 
     const minX =
-
         scenarioBounds.min.x +
         SPAWN_MARGIN;
 
 
     const maxX =
-
         scenarioBounds.max.x -
         SPAWN_MARGIN;
 
 
     const minZ =
-
         scenarioBounds.min.z +
         SPAWN_MARGIN;
 
 
     const maxZ =
-
         scenarioBounds.max.z -
         SPAWN_MARGIN;
 
 
-
-    let created =
-        0;
-
-
-
     for (
-
-        let i = 0;
-
-        i < RANDOM_BOX_COUNT;
-
-        i++
-
+        let attempt = 0;
+        attempt <
+        MAX_SPAWN_ATTEMPTS;
+        attempt++
     ) {
 
-        /*
-            TAMAÑOS ALEATORIOS.
-
-            Ahora podemos encontrar cubos
-            pequeños, medianos y grandes.
-        */
-
-        const sx =
-
+        const x =
             THREE.MathUtils.randFloat(
-
-                0.55,
-
-                1.6
-
+                minX,
+                maxX
             );
 
 
-        const sy =
-
+        const z =
             THREE.MathUtils.randFloat(
-
-                0.55,
-
-                1.8
-
+                minZ,
+                maxZ
             );
 
 
-        const sz =
-
-            THREE.MathUtils.randFloat(
-
-                0.55,
-
-                1.6
-
-            );
-
-
-        const radius =
-
-            Math.max(
-                sx,
-                sz
+        if (
+            !isSpawnPositionFree(
+                x,
+                z,
+                radius
             )
-
-            * 0.75;
-
-
-
-        for (
-
-            let attempt = 0;
-
-            attempt < MAX_SPAWN_ATTEMPTS;
-
-            attempt++
-
         ) {
 
-            const x =
+            continue;
 
-                THREE.MathUtils.randFloat(
-
-                    minX,
-
-                    maxX
-
-                );
+        }
 
 
-            const z =
-
-                THREE.MathUtils.randFloat(
-
-                    minZ,
-
-                    maxZ
-
-                );
-
-
-
-            if (
-
-                !isSpawnPositionFree(
-
-                    x,
-
-                    z,
-
-                    radius
-
-                )
-
-            ) {
-
-                continue;
-
-            }
-
-
-
-            const ground =
-
-                findGroundPosition(
-
-                    x,
-
-                    z
-
-                );
-
-
-            if (
-                !ground
-            ) {
-
-                continue;
-
-            }
-
-
-
-            const y =
-
-                ground.point.y +
-
-                sy / 2 +
-
-                0.03;
-
-
-
-            createDynamicBox(
+        const ground =
+            findFlatSurfaceForObject(
 
                 x,
-
-                y,
-
                 z,
 
-                sx,
-
-                sy,
-
-                sz,
-
-                THREE.MathUtils.randFloat(
-                    3,
-                    10
-                ),
-
-                randomBoxColor()
+                config.width,
+                config.depth
 
             );
 
 
+        if (
+            !ground
+        ) {
 
-            registerSpawn(
+            continue;
+
+        }
+
+
+        if (
+            !isSpawnVolumeClear(
 
                 x,
 
+                ground.point.y,
+
                 z,
 
-                radius
+                config.width,
 
-            );
+                config.height,
 
+                config.depth
+
+            )
+        ) {
+
+            continue;
+
+        }
+
+
+        /*
+            Centro vertical del objeto.
+        */
+
+        const y =
+            ground.point.y +
+            config.height / 2 +
+            0.035;
+
+
+        createDynamicShape(
+
+            type,
+
+            x,
+            y,
+            z,
+
+            scale,
+
+            THREE.MathUtils.randFloat(
+                3,
+                8
+            ),
+
+            randomObjectColor()
+
+        );
+
+
+        registerSpawn(
+
+            x,
+
+            z,
+
+            radius
+
+        );
+
+
+        return true;
+
+    }
+
+
+    return false;
+
+}
+
+
+/* =========================================================
+   GENERAR LAS 5 FORMAS
+========================================================= */
+
+function generateRandomShapes() {
+
+    let created = 0;
+
+
+    /*
+        Primero creamos obligatoriamente
+        una figura de cada tipo.
+    */
+
+    for (
+        const type
+        of SHAPE_TYPES
+    ) {
+
+        if (
+            spawnRandomShape(
+                type
+            )
+        ) {
 
             created++;
-
-
-            break;
 
         }
 
     }
 
 
+    /*
+        Después generamos más objetos
+        utilizando aleatoriamente los
+        mismos cinco tipos.
+    */
+
+    for (
+        let i = SHAPE_TYPES.length;
+        i < RANDOM_OBJECT_COUNT;
+        i++
+    ) {
+
+        const type =
+            SHAPE_TYPES[
+                Math.floor(
+                    Math.random() *
+                    SHAPE_TYPES.length
+                )
+            ];
+
+
+        if (
+            spawnRandomShape(
+                type
+            )
+        ) {
+
+            created++;
+
+        }
+
+    }
+
 
     console.log(
-
-        `Cubos aleatorios creados: ${created}`
-
+        `Figuras geométricas generadas: ${created}`
     );
 
 }
 
 
-
 /* =========================================================
-   BUSCAR UBICACIÓN PARA UNA PIRÁMIDE
+   BUSCAR LUGAR PARA PIRÁMIDE
 ========================================================= */
 
 function findPyramidSpawn(
@@ -1722,61 +2355,42 @@ function findPyramidSpawn(
 ) {
 
     const footprint =
-
         baseCount *
         cubeSize;
 
 
     const radius =
-
         footprint *
         0.65;
 
 
-
     const minX =
-
         scenarioBounds.min.x +
-
         radius +
-
         SPAWN_MARGIN;
 
 
     const maxX =
-
         scenarioBounds.max.x -
-
         radius -
-
         SPAWN_MARGIN;
 
 
     const minZ =
-
         scenarioBounds.min.z +
-
         radius +
-
         SPAWN_MARGIN;
 
 
     const maxZ =
-
         scenarioBounds.max.z -
-
         radius -
-
         SPAWN_MARGIN;
 
 
-
     if (
-
         minX >= maxX ||
-
         minZ >= maxZ
-
     ) {
 
         return null;
@@ -1784,53 +2398,36 @@ function findPyramidSpawn(
     }
 
 
-
     for (
-
         let attempt = 0;
-
         attempt <
         MAX_SPAWN_ATTEMPTS;
-
         attempt++
-
     ) {
 
         const x =
-
             THREE.MathUtils.randFloat(
-
                 minX,
-
                 maxX
-
             );
 
 
         const z =
-
             THREE.MathUtils.randFloat(
-
                 minZ,
-
                 maxZ
-
             );
 
 
-
         if (
-
             !isSpawnPositionFree(
 
                 x,
-
                 z,
 
                 radius
 
             )
-
         ) {
 
             continue;
@@ -1838,9 +2435,7 @@ function findPyramidSpawn(
         }
 
 
-
         const flatArea =
-
             findFlatArea(
 
                 x,
@@ -1861,6 +2456,31 @@ function findPyramidSpawn(
         }
 
 
+        if (
+            !isSpawnVolumeClear(
+
+                x,
+
+                flatArea.y,
+
+                z,
+
+                footprint,
+
+                baseCount *
+                cubeSize,
+
+                footprint,
+
+                0.35
+
+            )
+        ) {
+
+            continue;
+
+        }
+
 
         registerSpawn(
 
@@ -1868,8 +2488,7 @@ function findPyramidSpawn(
 
             z,
 
-            radius +
-            1
+            radius + 1
 
         );
 
@@ -1893,7 +2512,6 @@ function findPyramidSpawn(
 }
 
 
-
 /* =========================================================
    CREAR PIRÁMIDE DERRIBABLE
 ========================================================= */
@@ -1912,33 +2530,17 @@ function createPyramid(
 
 ) {
 
-    /*
-        Dejamos una separación muy pequeña.
-
-        Esto evita que los colliders nazcan
-        exactamente superpuestos.
-    */
-
     const horizontalSpacing =
-
         cubeSize *
         1.03;
 
 
     const verticalSpacing =
-
         cubeSize *
         1.015;
 
 
-
-    /*
-        La pirámide puede mirar hacia
-        una dirección distinta en cada partida.
-    */
-
     const yaw =
-
         THREE.MathUtils.randFloat(
 
             0,
@@ -1950,134 +2552,74 @@ function createPyramid(
 
 
     const cos =
-
         Math.cos(
             yaw
         );
 
 
     const sin =
-
         Math.sin(
             yaw
         );
 
 
-
-    /*
-        Ejemplo con 4 niveles:
-
-        [] [] [] []
-          [] [] []
-            [] []
-              []
-    */
-
     for (
-
         let level = 0;
-
         level < levels;
-
         level++
-
     ) {
 
         const boxesOnLevel =
-
             levels -
             level;
 
 
         const levelWidth =
-
             (
                 boxesOnLevel -
                 1
-            )
-
-            *
+            ) *
             horizontalSpacing;
 
 
-
         for (
-
             let i = 0;
-
             i < boxesOnLevel;
-
             i++
-
         ) {
 
-            /*
-                Posición horizontal local.
-            */
-
             const localX =
-
-                -levelWidth /
-                2
-
-                +
-
+                -levelWidth / 2 +
                 i *
                 horizontalSpacing;
 
 
-
-            /*
-                Giramos toda la pirámide
-                alrededor del eje Y.
-            */
-
             const rotatedX =
-
                 localX *
                 cos;
 
 
             const rotatedZ =
-
                 localX *
                 sin;
 
 
-
             const x =
-
                 centerX +
                 rotatedX;
 
 
             const z =
-
                 centerZ +
                 rotatedZ;
 
 
             const y =
-
                 groundY +
-
-                cubeSize /
-                2
-
-                +
-
+                cubeSize / 2 +
                 level *
                 verticalSpacing;
 
-
-
-            /*
-                Los bloques de las pirámides
-                tienen masas moderadas.
-
-                Son estables al comenzar,
-                pero un disparo puede derribarlos.
-            */
 
             createDynamicBox(
 
@@ -2094,11 +2636,11 @@ function createPyramid(
                 cubeSize,
 
                 THREE.MathUtils.randFloat(
-                    3.5,
+                    3,
                     5
                 ),
 
-                randomBoxColor()
+                randomObjectColor()
 
             );
 
@@ -2109,49 +2651,29 @@ function createPyramid(
 }
 
 
-
 /* =========================================================
    GENERAR PIRÁMIDES
 ========================================================= */
 
 function generatePyramids() {
 
-    let created =
-        0;
-
+    let created = 0;
 
 
     for (
-
         let i = 0;
-
         i < PYRAMID_COUNT;
-
         i++
-
     ) {
 
-        /*
-            Cada pirámide puede tener
-            cubos de un tamaño distinto.
-
-            Una podría tener cubos de 0.75
-            y otra de 1.05, por ejemplo.
-        */
-
         const cubeSize =
-
             THREE.MathUtils.randFloat(
-
                 0.75,
-
                 1.05
-
             );
 
 
         const location =
-
             findPyramidSpawn(
 
                 PYRAMID_BASE,
@@ -2166,16 +2688,12 @@ function generatePyramids() {
         ) {
 
             console.warn(
-
                 `No se encontró espacio para la pirámide ${i + 1}.`
-
             );
-
 
             continue;
 
         }
-
 
 
         createPyramid(
@@ -2198,15 +2716,11 @@ function generatePyramids() {
     }
 
 
-
     console.log(
-
         `Pirámides creadas: ${created}`
-
     );
 
 }
-
 
 
 /* =========================================================
@@ -2222,20 +2736,11 @@ loader.load(
     './assets/models/collision-world.glb',
 
 
-    /* =====================================================
-       MODELO CARGADO
-    ===================================================== */
-
     (gltf) => {
 
         const model =
             gltf.scene;
 
-
-
-        /* =================================================
-           CONFIGURAR MODELO
-        ================================================= */
 
         model.traverse(
 
@@ -2250,13 +2755,9 @@ loader.load(
                 }
 
 
-                child.castShadow =
-                    true;
+                child.castShadow = true;
 
-
-                child.receiveShadow =
-                    true;
-
+                child.receiveShadow = true;
 
 
                 if (
@@ -2284,7 +2785,6 @@ loader.load(
         );
 
 
-
         scene.add(
             model
         );
@@ -2295,97 +2795,62 @@ loader.load(
         );
 
 
-
-        /* =================================================
-           LÍMITES
-        ================================================= */
-
         scenarioBounds =
-
             new THREE.Box3()
                 .setFromObject(
                     model
                 );
 
 
-
-        /* =================================================
-           FÍSICA DEL MAPA
-        ================================================= */
-
         createScenarioPhysics(
             model
         );
 
 
-
-        /* =================================================
-           PRIMERO PIRÁMIDES
-        ================================================= */
+        /*
+            Primero las pirámides.
+        */
 
         generatePyramids();
 
 
-
-        /* =================================================
-           DESPUÉS CUBOS ALEATORIOS
-        ================================================= */
-
-        generateRandomBoxes();
-
-
-
-        /* =================================================
-           ACTIVAR ESCENARIO
-        ================================================= */
-
-        scenarioReady =
-            true;
-
-
         /*
-            Sincronizamos inicialmente
-            la posición de la cámara.
+            Después las cinco formas
+            geométricas.
         */
+
+        generateRandomShapes();
+
+
+        scenarioReady = true;
+
 
         updateCameraFromPlayer();
 
 
         console.log(
-
             'Escenario preparado correctamente.'
-
         );
 
     },
 
 
-    /* =====================================================
-       PROGRESO
-    ===================================================== */
-
     (xhr) => {
 
         if (
-            xhr.total >
-            0
+            xhr.total > 0
         ) {
 
             const progress =
-
                 (
                     xhr.loaded /
                     xhr.total
-                )
-
-                *
+                ) *
                 100;
 
 
             console.log(
-
                 `Cargando escenario: ${progress.toFixed(0)}%`
-
             );
 
         }
@@ -2393,18 +2858,11 @@ loader.load(
     },
 
 
-    /* =====================================================
-       ERROR
-    ===================================================== */
-
     (error) => {
 
         console.error(
-
             'Error al cargar collision-world.glb:',
-
             error
-
         );
 
     }
@@ -2412,9 +2870,8 @@ loader.load(
 );
 
 
-
 /* =========================================================
-   VECTOR HACIA ADELANTE
+   DIRECCIONES DEL JUGADOR
 ========================================================= */
 
 function getForwardVector() {
@@ -2424,17 +2881,14 @@ function getForwardVector() {
     );
 
 
-    playerDirection.y =
-        0;
+    playerDirection.y = 0;
 
 
     if (
-        playerDirection.lengthSq() >
-        0
+        playerDirection.lengthSq() > 0
     ) {
 
-        playerDirection
-            .normalize();
+        playerDirection.normalize();
 
     }
 
@@ -2443,11 +2897,6 @@ function getForwardVector() {
 
 }
 
-
-
-/* =========================================================
-   VECTOR LATERAL
-========================================================= */
 
 function getSideVector() {
 
@@ -2456,25 +2905,21 @@ function getSideVector() {
     );
 
 
-    playerDirection.y =
-        0;
+    playerDirection.y = 0;
 
 
     if (
-        playerDirection.lengthSq() >
-        0
+        playerDirection.lengthSq() > 0
     ) {
 
-        playerDirection
-            .normalize();
+        playerDirection.normalize();
 
     }
 
 
-    playerDirection
-        .cross(
-            camera.up
-        );
+    playerDirection.cross(
+        camera.up
+    );
 
 
     return playerDirection;
@@ -2482,9 +2927,8 @@ function getSideVector() {
 }
 
 
-
 /* =========================================================
-   CONTROLES DEL JUGADOR
+   CONTROLES
 ========================================================= */
 
 function controls(
@@ -2492,18 +2936,10 @@ function controls(
 ) {
 
     const acceleration =
-
         playerOnFloor
-
             ? 18
-
             : 7;
 
-
-
-    /* =====================================================
-       W
-    ===================================================== */
 
     if (
         keyStates.KeyW
@@ -2524,11 +2960,6 @@ function controls(
     }
 
 
-
-    /* =====================================================
-       S
-    ===================================================== */
-
     if (
         keyStates.KeyS
     ) {
@@ -2547,11 +2978,6 @@ function controls(
 
     }
 
-
-
-    /* =====================================================
-       A
-    ===================================================== */
 
     if (
         keyStates.KeyA
@@ -2572,11 +2998,6 @@ function controls(
     }
 
 
-
-    /* =====================================================
-       D
-    ===================================================== */
-
     if (
         keyStates.KeyD
     ) {
@@ -2596,51 +3017,32 @@ function controls(
     }
 
 
-
-    /* =====================================================
-       SALTO
-    ===================================================== */
-
     if (
-
         playerOnFloor &&
-
         keyStates.Space
-
     ) {
 
-        playerVelocity.y =
-            7;
+        playerVelocity.y = 7;
 
-
-        playerOnFloor =
-            false;
+        playerOnFloor = false;
 
     }
 
 }
 
 
-
 /* =========================================================
-   MOVIMIENTO FÍSICO DEL JUGADOR
+   ACTUALIZAR JUGADOR
 ========================================================= */
 
 function updatePlayer(
     deltaTime
 ) {
 
-    /* =====================================================
-       FRICCIÓN HORIZONTAL
-    ===================================================== */
-
     const horizontalDamping =
-
         Math.exp(
-
             -4 *
             deltaTime
-
         );
 
 
@@ -2652,23 +3054,12 @@ function updatePlayer(
         horizontalDamping;
 
 
-
-    /* =====================================================
-       GRAVEDAD
-    ===================================================== */
-
     if (
         playerOnFloor
     ) {
 
-        /*
-            Pequeña fuerza hacia abajo para
-            mantener contacto con el piso.
-        */
-
         if (
-            playerVelocity.y <
-            0
+            playerVelocity.y < 0
         ) {
 
             playerVelocity.y =
@@ -2679,17 +3070,11 @@ function updatePlayer(
     } else {
 
         playerVelocity.y -=
-
             25 *
             deltaTime;
 
     }
 
-
-
-    /* =====================================================
-       MOVIMIENTO DESEADO
-    ===================================================== */
 
     const desiredMovement = {
 
@@ -2708,18 +3093,6 @@ function updatePlayer(
     };
 
 
-
-    /*
-        Rapier calcula cuánto podemos
-        movernos realmente sin atravesar:
-
-        - paredes
-        - pisos
-        - cubos
-        - pirámides
-        - otros colliders
-    */
-
     characterController
         .computeColliderMovement(
 
@@ -2730,58 +3103,30 @@ function updatePlayer(
         );
 
 
-
     const movement =
-
         characterController
             .computedMovement();
 
 
-
-    /*
-        Saber si el jugador está
-        tocando suelo.
-    */
-
     playerOnFloor =
-
         characterController
             .computedGrounded();
 
 
-
-    /*
-        Si caíamos pero el movimiento vertical
-        fue detenido por el suelo, eliminamos
-        velocidad descendente.
-    */
-
     if (
-
         playerOnFloor &&
-
-        playerVelocity.y <
-        0
-
+        playerVelocity.y < 0
     ) {
 
-        playerVelocity.y =
-            0;
+        playerVelocity.y = 0;
 
     }
 
 
-
     const current =
-
         playerBody
             .translation();
 
-
-
-    /*
-        Posición física corregida.
-    */
 
     playerBody
         .setNextKinematicTranslation({
@@ -2803,15 +3148,13 @@ function updatePlayer(
 }
 
 
-
 /* =========================================================
-   POSICIÓN DE CÁMARA SEGÚN JUGADOR
+   CÁMARA
 ========================================================= */
 
 function updateCameraFromPlayer() {
 
     const position =
-
         playerBody
             .translation();
 
@@ -2828,14 +3171,8 @@ function updateCameraFromPlayer() {
     );
 
 
-
-    /* =====================================================
-       SI CAEMOS FUERA DEL MAPA
-    ===================================================== */
-
     if (
-        position.y <
-        -20
+        position.y < -20
     ) {
 
         resetPlayer();
@@ -2845,32 +3182,30 @@ function updateCameraFromPlayer() {
 }
 
 
-
 /* =========================================================
    REINICIAR JUGADOR
 ========================================================= */
 
 function resetPlayer() {
 
-    playerBody
-        .setTranslation(
+    playerBody.setTranslation(
 
-            {
+        {
 
-                x:
-                    PLAYER_START.x,
+            x:
+                PLAYER_START.x,
 
-                y:
-                    PLAYER_START.y,
+            y:
+                PLAYER_START.y,
 
-                z:
-                    PLAYER_START.z
+            z:
+                PLAYER_START.z
 
-            },
+        },
 
-            true
+        true
 
-        );
+    );
 
 
     playerBody
@@ -2889,16 +3224,13 @@ function resetPlayer() {
 
 
     playerVelocity.set(
-
         0,
         0,
         0
-
     );
 
 
-    playerOnFloor =
-        false;
+    playerOnFloor = false;
 
 
     updateCameraFromPlayer();
@@ -2906,24 +3238,127 @@ function resetPlayer() {
 }
 
 
-
 /* =========================================================
-   DISPARAR LÁSER
+   INICIAR CARGA DEL LÁSER
 ========================================================= */
 
-function shootLaser() {
+function startLaserCharge() {
 
     if (
-
         document.pointerLockElement !==
         renderer.domElement
-
     ) {
 
         return;
 
     }
 
+
+    if (
+        isChargingLaser
+    ) {
+
+        return;
+
+    }
+
+
+    isChargingLaser = true;
+
+
+    laserChargeStart =
+        performance.now();
+
+}
+
+
+/* =========================================================
+   FINALIZAR CARGA
+========================================================= */
+
+function releaseLaserCharge() {
+
+    if (
+        !isChargingLaser
+    ) {
+
+        return;
+
+    }
+
+
+    const timeHeld =
+        (
+            performance.now() -
+            laserChargeStart
+        ) /
+        1000;
+
+
+    isChargingLaser = false;
+
+
+    shootLaser(
+        timeHeld
+    );
+
+}
+
+
+/* =========================================================
+   DISPARAR LÁSER
+========================================================= */
+
+function shootLaser(
+    chargeTime = 0
+) {
+
+    if (
+        document.pointerLockElement !==
+        renderer.domElement
+    ) {
+
+        return;
+
+    }
+
+
+    const charge =
+        THREE.MathUtils.clamp(
+
+            chargeTime /
+            MAX_LASER_CHARGE_TIME,
+
+            0,
+
+            1
+
+        );
+
+
+    /*
+        Curva cuadrática.
+
+        El disparo corto aumenta poco.
+
+        La carga máxima aumenta muchísimo.
+    */
+
+    const powerCurve =
+        charge *
+        charge;
+
+
+    const laserForce =
+        THREE.MathUtils.lerp(
+
+            NORMAL_LASER_FORCE,
+
+            MAX_LASER_FORCE,
+
+            powerCurve
+
+        );
 
 
     const direction =
@@ -2938,59 +3373,99 @@ function shootLaser() {
     direction.normalize();
 
 
-
-    const geometry =
-
-        new THREE.CylinderGeometry(
+    const radius =
+        THREE.MathUtils.lerp(
 
             0.035,
 
-            0.035,
+            0.12,
+
+            charge
+
+        );
+
+
+    const length =
+        THREE.MathUtils.lerp(
 
             0.9,
 
-            10
+            2.2,
+
+            charge
+
+        );
+
+
+    const geometry =
+        new THREE.CylinderGeometry(
+
+            radius,
+
+            radius,
+
+            length,
+
+            14
 
         );
 
 
     geometry.rotateX(
-
-        Math.PI /
-        2
-
+        Math.PI / 2
     );
 
 
+    const normalColor =
+        new THREE.Color(
+            0x67e8f9
+        );
+
+
+    const maxColor =
+        new THREE.Color(
+            0xffffff
+        );
+
+
+    const laserColor =
+        normalColor
+            .clone()
+            .lerp(
+
+                maxColor,
+
+                charge * 0.85
+
+            );
+
 
     const material =
-
         new THREE.MeshStandardMaterial({
 
             color:
-                0x67e8f9,
+                laserColor,
 
             emissive:
-                0x22d3ee,
+                laserColor,
 
             emissiveIntensity:
-                5,
+                THREE.MathUtils.lerp(
+                    5,
+                    20,
+                    charge
+                ),
 
             roughness:
-                0.25
+                0.1
 
         });
 
 
-
     const mesh =
-
         new THREE.Mesh(
-
             geometry,
-
             material
-
         );
 
 
@@ -2998,12 +3473,11 @@ function shootLaser() {
         .copy(
             camera.position
         )
-
         .addScaledVector(
 
             direction,
 
-            0.8
+            0.9
 
         );
 
@@ -3034,44 +3508,253 @@ function shootLaser() {
         direction,
 
         speed:
-            35,
+            THREE.MathUtils.lerp(
+                35,
+                60,
+                charge
+            ),
 
         life:
-            1.8
+            2,
+
+        force:
+            laserForce,
+
+        charge
 
     });
+
+
+    console.log(
+
+        `Carga: ${(charge * 100).toFixed(0)}% | Fuerza: ${laserForce.toFixed(1)}`
+
+    );
 
 }
 
 
+/* =========================================================
+   ONDA EXPANSIVA
+========================================================= */
+
+function applyLaserShockwave(
+
+    impactPoint,
+
+    mainObject,
+
+    charge
+
+) {
+
+    /*
+        Solo cargas relativamente fuertes
+        producen onda expansiva.
+    */
+
+    if (
+        charge < 0.4
+    ) {
+
+        return;
+
+    }
+
+
+    const radius =
+        THREE.MathUtils.lerp(
+
+            1,
+
+            MAX_SHOCKWAVE_RADIUS,
+
+            charge
+
+        );
+
+
+    const maxForce =
+        THREE.MathUtils.lerp(
+
+            5,
+
+            MAX_SHOCKWAVE_FORCE,
+
+            charge *
+            charge
+
+        );
+
+
+    for (
+        const item
+        of physicalObjects
+    ) {
+
+        if (
+            item === mainObject
+        ) {
+
+            continue;
+
+        }
+
+
+        const position =
+            item.body
+                .translation();
+
+
+        const dx =
+            position.x -
+            impactPoint.x;
+
+
+        const dy =
+            position.y -
+            impactPoint.y;
+
+
+        const dz =
+            position.z -
+            impactPoint.z;
+
+
+        const distance =
+            Math.sqrt(
+
+                dx * dx +
+
+                dy * dy +
+
+                dz * dz
+
+            );
+
+
+        if (
+            distance >
+            radius
+        ) {
+
+            continue;
+
+        }
+
+
+        const proximity =
+            1 -
+            distance /
+            radius;
+
+
+        const force =
+            maxForce *
+            proximity;
+
+
+        const horizontalDistance =
+            Math.max(
+
+                Math.hypot(
+                    dx,
+                    dz
+                ),
+
+                0.1
+
+            );
+
+
+        const directionX =
+            dx /
+            horizontalDistance;
+
+
+        const directionZ =
+            dz /
+            horizontalDistance;
+
+
+        item.body
+            .applyImpulse(
+
+                {
+
+                    x:
+                        directionX *
+                        force,
+
+                    /*
+                        Pequeño golpe vertical
+                        para perder estabilidad.
+                    */
+
+                    y:
+                        THREE.MathUtils.lerp(
+
+                            0.15,
+
+                            1.1,
+
+                            charge
+
+                        ) *
+                        proximity,
+
+                    z:
+                        directionZ *
+                        force
+
+                },
+
+                true
+
+            );
+
+    }
+
+}
+
 
 /* =========================================================
-   EFECTO DEL IMPACTO
+   EFECTO DE IMPACTO
 ========================================================= */
 
 function createImpact(
-    position
+
+    position,
+
+    charge = 0
+
 ) {
 
     const flash =
-
         new THREE.PointLight(
 
             0x67e8f9,
 
-            8,
+            THREE.MathUtils.lerp(
+                8,
+                22,
+                charge
+            ),
 
-            4,
+            THREE.MathUtils.lerp(
+                4,
+                8,
+                charge
+            ),
 
             2
 
         );
 
 
-    flash.position
-        .copy(
-            position
-        );
+    flash.position.copy(
+        position
+    );
 
 
     scene.add(
@@ -3089,12 +3772,15 @@ function createImpact(
 
         },
 
-        90
+        THREE.MathUtils.lerp(
+            90,
+            170,
+            charge
+        )
 
     );
 
 }
-
 
 
 /* =========================================================
@@ -3125,15 +3811,11 @@ function removeLaser(
 
 
     lasers.splice(
-
         index,
-
         1
-
     );
 
 }
-
 
 
 /* =========================================================
@@ -3144,27 +3826,31 @@ function updateLasers(
     deltaTime
 ) {
 
-    const meshes =
+    /*
+        El láser puede impactar:
 
-        physicalObjects
-            .map(
+        - cualquiera de las 5 figuras
+        - cubos de las pirámides
+        - estructuras del escenario
+    */
 
-                item =>
-                    item.mesh
+    const targets = [
 
-            );
+        ...physicalObjects.map(
+            item =>
+                item.mesh
+        ),
 
+        ...scenarioMeshes
+
+    ];
 
 
     for (
-
         let i =
             lasers.length - 1;
-
         i >= 0;
-
         i--
-
     ) {
 
         const laser =
@@ -3172,14 +3858,11 @@ function updateLasers(
 
 
         const distance =
-
             laser.speed *
             deltaTime;
 
 
-
         const ray =
-
             new THREE.Raycaster(
 
                 laser.mesh.position,
@@ -3188,22 +3871,19 @@ function updateLasers(
 
                 0,
 
-                distance +
-                0.6
+                distance + 0.8
 
             );
 
 
         const hit =
-
             ray.intersectObjects(
 
-                meshes,
+                targets,
 
                 false
 
             )[0];
-
 
 
         if (
@@ -3211,33 +3891,21 @@ function updateLasers(
         ) {
 
             const item =
+                physicalObjects.find(
 
-                physicalObjects
-                    .find(
+                    entry =>
 
-                        entry =>
+                        entry.mesh ===
+                        hit.object
 
-                            entry.mesh ===
-                            hit.object
-
-                    );
-
+                );
 
 
             if (
                 item
             ) {
 
-                /*
-                    El disparo aplica una fuerza
-                    horizontal importante.
-
-                    Tiene muy poca fuerza vertical
-                    para evitar que las cajas vuelen.
-                */
-
                 const horizontal =
-
                     new THREE.Vector3(
 
                         laser.direction.x,
@@ -3250,8 +3918,7 @@ function updateLasers(
 
 
                 if (
-                    horizontal.lengthSq() >
-                    0
+                    horizontal.lengthSq() > 0
                 ) {
 
                     horizontal.normalize();
@@ -3259,6 +3926,12 @@ function updateLasers(
                 }
 
 
+                /*
+                    IMPULSO PRINCIPAL.
+
+                    Hasta 120 unidades de fuerza
+                    con carga máxima.
+                */
 
                 item.body
                     .applyImpulse(
@@ -3267,14 +3940,27 @@ function updateLasers(
 
                             x:
                                 horizontal.x *
-                                9,
+                                laser.force,
+
+                            /*
+                                Poco impulso vertical
+                                para que no salga volando.
+                            */
 
                             y:
-                                0.2,
+                                THREE.MathUtils.lerp(
+
+                                    0.12,
+
+                                    1.15,
+
+                                    laser.charge
+
+                                ),
 
                             z:
                                 horizontal.z *
-                                9
+                                laser.force
 
                         },
 
@@ -3282,12 +3968,31 @@ function updateLasers(
 
                     );
 
+
+                /*
+                    Onda de choque para derribar
+                    estructuras completas.
+                */
+
+                applyLaserShockwave(
+
+                    hit.point,
+
+                    item,
+
+                    laser.charge
+
+                );
+
             }
 
 
-
             createImpact(
-                hit.point
+
+                hit.point,
+
+                laser.charge
+
             );
 
 
@@ -3299,7 +4004,6 @@ function updateLasers(
             continue;
 
         }
-
 
 
         laser.mesh.position
@@ -3314,7 +4018,6 @@ function updateLasers(
 
         laser.life -=
             deltaTime;
-
 
 
         if (
@@ -3332,9 +4035,8 @@ function updateLasers(
 }
 
 
-
 /* =========================================================
-   SINCRONIZAR FÍSICA DE CUBOS
+   SINCRONIZAR FÍSICAS
 ========================================================= */
 
 function syncPhysics() {
@@ -3345,16 +4047,13 @@ function syncPhysics() {
     ) {
 
         const position =
-
             item.body
                 .translation();
 
 
         const rotation =
-
             item.body
                 .rotation();
-
 
 
         item.mesh.position.set(
@@ -3383,7 +4082,6 @@ function syncPhysics() {
     }
 
 }
-
 
 
 /* =========================================================
@@ -3420,7 +4118,6 @@ document.addEventListener(
 );
 
 
-
 /* =========================================================
    POINTER LOCK
 ========================================================= */
@@ -3433,10 +4130,8 @@ renderer.domElement
         () => {
 
             if (
-
                 document.pointerLockElement !==
                 renderer.domElement
-
             ) {
 
                 renderer.domElement
@@ -3449,9 +4144,32 @@ renderer.domElement
     );
 
 
+/* =========================================================
+   SALIR DEL POINTER LOCK
+========================================================= */
+
+document.addEventListener(
+
+    'pointerlockchange',
+
+    () => {
+
+        if (
+            document.pointerLockElement !==
+            renderer.domElement
+        ) {
+
+            isChargingLaser = false;
+
+        }
+
+    }
+
+);
+
 
 /* =========================================================
-   MOUSE
+   MOUSE / CÁMARA
 ========================================================= */
 
 document.addEventListener(
@@ -3461,10 +4179,8 @@ document.addEventListener(
     (event) => {
 
         if (
-
             document.pointerLockElement !==
             renderer.domElement
-
         ) {
 
             return;
@@ -3472,23 +4188,17 @@ document.addEventListener(
         }
 
 
-
         camera.rotation.y -=
-
             event.movementX /
             500;
 
 
-
         camera.rotation.x -=
-
             event.movementY /
             500;
 
 
-
         camera.rotation.x =
-
             THREE.MathUtils.clamp(
 
                 camera.rotation.x,
@@ -3504,9 +4214,8 @@ document.addEventListener(
 );
 
 
-
 /* =========================================================
-   DISPARAR
+   COMENZAR CARGA
 ========================================================= */
 
 document.addEventListener(
@@ -3519,7 +4228,7 @@ document.addEventListener(
             event.button === 0
         ) {
 
-            shootLaser();
+            startLaserCharge();
 
         }
 
@@ -3527,6 +4236,28 @@ document.addEventListener(
 
 );
 
+
+/* =========================================================
+   DISPARAR AL SOLTAR
+========================================================= */
+
+document.addEventListener(
+
+    'mouseup',
+
+    (event) => {
+
+        if (
+            event.button === 0
+        ) {
+
+            releaseLaserCharge();
+
+        }
+
+    }
+
+);
 
 
 /* =========================================================
@@ -3537,9 +4268,7 @@ const FIXED_TIME_STEP =
     1 / 60;
 
 
-let physicsAccumulator =
-    0;
-
+let physicsAccumulator = 0;
 
 
 function updatePhysics(
@@ -3550,36 +4279,20 @@ function updatePhysics(
         deltaTime;
 
 
-
     while (
-
         physicsAccumulator >=
         FIXED_TIME_STEP
-
     ) {
-
-        /*
-            Controles.
-        */
 
         controls(
             FIXED_TIME_STEP
         );
 
 
-        /*
-            Calculamos el movimiento del jugador
-            ANTES de avanzar el mundo físico.
-        */
-
         updatePlayer(
             FIXED_TIME_STEP
         );
 
-
-        /*
-            Avanzamos Rapier.
-        */
 
         physicsWorld.timestep =
             FIXED_TIME_STEP;
@@ -3594,23 +4307,12 @@ function updatePhysics(
     }
 
 
-
-    /*
-        Actualizar posición visual
-        de todos los cuerpos.
-    */
-
     syncPhysics();
 
-
-    /*
-        La cámara sigue al jugador.
-    */
 
     updateCameraFromPlayer();
 
 }
-
 
 
 /* =========================================================
@@ -3620,7 +4322,6 @@ function updatePhysics(
 function animate() {
 
     const deltaTime =
-
         Math.min(
 
             0.05,
@@ -3630,24 +4331,14 @@ function animate() {
         );
 
 
-
     if (
         scenarioReady
     ) {
-
-        /*
-            Jugador + cubos + escenario
-            utilizan Rapier.
-        */
 
         updatePhysics(
             deltaTime
         );
 
-
-        /*
-            Láser visual / impactos.
-        */
 
         updateLasers(
             deltaTime
@@ -3656,17 +4347,12 @@ function animate() {
     }
 
 
-
     renderer.render(
-
         scene,
-
         camera
-
     );
 
 }
-
 
 
 /* =========================================================
@@ -3676,7 +4362,6 @@ function animate() {
 renderer.setAnimationLoop(
     animate
 );
-
 
 
 /* =========================================================
@@ -3690,7 +4375,6 @@ window.addEventListener(
     () => {
 
         camera.aspect =
-
             window.innerWidth /
             window.innerHeight;
 

@@ -10,7 +10,9 @@
         content="width=device-width, initial-scale=1.0"
     >
 
-    <title>Práctica 1.4 | Escenarios interactivos</title>
+    <title>
+        Práctica 1.4 | Escenarios interactivos
+    </title>
 
 
     <!-- Bootstrap 5.3 -->
@@ -20,7 +22,7 @@
     >
 
 
-    <!-- CSS del proyecto -->
+    <!-- CSS -->
     <link
         rel="stylesheet"
         href="./assets/css/styles.css"
@@ -43,17 +45,19 @@
 <body>
 
     <!-- ==========================================
-         CONTENEDOR DEL ESCENARIO 3D
+         ESCENARIO 3D
     =========================================== -->
 
     <div id="scene-container"></div>
 
 
     <!-- ==========================================
-         MIRA
+         MIRA CENTRAL
     =========================================== -->
 
-    <div class="crosshair">+</div>
+    <div class="crosshair">
+        +
+    </div>
 
 
     <!-- ==========================================
@@ -65,41 +69,92 @@
     >
 
         <h1 class="h5 mb-2">
+
             Escenarios interactivos
+
         </h1>
 
+
         <p class="small mb-2">
+
             Haz clic en el escenario para activar el mouse.
+
         </p>
 
 
         <div class="d-flex flex-wrap gap-2 small">
 
             <span>
-                <kbd class="key">WASD</kbd>
+
+                <kbd class="key">
+                    WASD
+                </kbd>
+
                 Mover
+
             </span>
 
+
             <span>
-                <kbd class="key">SPACE</kbd>
+
+                <kbd class="key">
+                    SPACE
+                </kbd>
+
                 Saltar
+
             </span>
 
-            <span>
-                <kbd class="key">CLICK</kbd>
-                Láser
-            </span>
 
             <span>
-                <kbd class="key">ESC</kbd>
+
+                <kbd class="key">
+                    CLICK
+                </kbd>
+
+                Disparo normal
+
+            </span>
+
+
+            <span>
+
+                <kbd class="key">
+                    MANTENER CLICK
+                </kbd>
+
+                Cargar disparo potente
+
+            </span>
+
+
+            <span>
+
+                <kbd class="key">
+                    ESC
+                </kbd>
+
                 Liberar mouse
+
             </span>
 
         </div>
 
 
-        <div class="mt-2 small">
-            Objetivo: derribar y desplazar objetos 3D.
+        <div class="mt-3 small">
+
+            <strong>Objetivo:</strong>
+
+            derriba las torres y desplaza los objetos del escenario.
+
+        </div>
+
+
+        <div class="mt-1 small text-info">
+
+            Mantén presionado el clic izquierdo hasta 1.5 segundos
+            para obtener la potencia máxima.
+
         </div>
 
     </section>
@@ -109,7 +164,9 @@
          FOOTER
     =========================================== -->
 
-    <footer class="app-footer text-center py-2 px-3">
+    <footer
+        class="app-footer text-center py-2 px-3"
+    >
 
         Programador: Derek Alejandro Vargas Meneses ·
         No. de control: 22200792 ·
